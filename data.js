@@ -24,7 +24,7 @@ window.SITE = {
       "sub": "#CONSOLE #OPENWORLD #SF",
       "icon": "pen",
       "url": "",
-      "thumb": "uploads/20261010-045834-ddd.png",
+      "thumb": "uploads/20261010-071443-Untitled-2.jpg",
       "desc": "노이즈로 붕괴한 기계 문명을 배경으로 한 콘솔 기반 서브컬처 오픈월드입니다. 특수부대 ‘ZERO’의 정체성은 오디오 컨트롤러의 기계적 요소로, 도시를 붕괴시킨 노이즈(잡음)는 글리치와 파형을 모티브로 표현했습니다.",
       "post": [
         {
@@ -75,7 +75,7 @@ window.SITE = {
       "sub": "#TBRPG #STEAMPUNK #MOBILE",
       "icon": "star",
       "url": "",
-      "thumb": "uploads/20261010-045917-2.png",
+      "thumb": "uploads/20261010-071407-Untitled-3.jpg",
       "desc": "이 게임은 TBRPG 장르로, 미래 세계에서 ‘타임루프’라는 힘을 지닌 플레이어가 시공간의 왜곡으로 과거 스팀펑크 시대로 전이되면서 시작됩니다. 플레이어는 특별한 능력을 지닌 동료들과 함께 뒤틀린 시공간을 바로잡기 위해 전투를 벌이는 세계관을 배경으로 합니다.",
       "post": [
         {
@@ -122,7 +122,7 @@ window.SITE = {
       "sub": "#VERTICAL #DARK #MOBILE",
       "icon": "star",
       "url": "",
-      "thumb": "uploads/20261010-050038-4.png",
+      "thumb": "uploads/20261010-071402-Untitled-4.jpg",
       "desc": "근미래 서브컬처 건슈팅 RPG의 UI/UX를 디자인했습니다. 캐릭터 아트워크가 돋보이도록 전체 레이아웃은 플랫(Flat)하게 구성하고, UI 요소마다 세밀한 그라데이션과 음영을 더해 시각적 밀도와 입체감을 살렸습니다.",
       "post": [
         {
@@ -144,7 +144,7 @@ window.SITE = {
       "title": "BUBBLE FIGHTER",
       "sub": ": RE-DESIGN",
       "url": "",
-      "thumb": "uploads/20261010-050118-32.png",
+      "thumb": "uploads/20261010-071359-Untitled-5.jpg",
       "desc": "온라인 PC게임 '버블파이터'의 UI를 모바일 플랫폼에 맞게 재구성했습니다. '버블'이라는 단어가 주는 맑고 둥근 이미지를 콘셉트로 삼아 전체적인 색감은 밝게 유지하고, 아이콘과 버튼은 둥근 형태로 구성해 버블파이터 특유의 캐주얼한 느낌을 살렸습니다.",
       "post": [
         {
@@ -183,7 +183,7 @@ window.SITE = {
       "sub": " 2023.10 - 재직 중",
       "icon": "star",
       "url": "",
-      "thumb": "uploads/20261010-050159-123.png",
+      "thumb": "uploads/20261010-072017-Untitled-6.jpg",
       "desc": "PC 온라인 게임 '그랜드체이스'의 라이브 서비스 UI/UX 전반을 담당했습니다.\n오랜 기간 사랑받은 게임 특유의 감성은 살리되, 노후화된 시스템의 사용성을\n현대적 트렌드에 맞춰 리뉴얼 작업을 수행했습니다. 또한, 프로모션 운영 리소스\n제작과 통합 디자인 가이드라인 수립을 통해 비주얼 일관성과 작업 효율을 동시에\n높였습니다.",
       "post": [
         {
@@ -217,7 +217,7 @@ window.SITE = {
       "title": "CELLBIG",
       "sub": " 2022.07 - 2023.07",
       "url": "",
-      "thumb": "uploads/20261010-050239-123.png",
+      "thumb": "uploads/20261010-072021-Untitled-7.jpg",
       "desc": "CELLBIG 소속 UI/UX 디자이너로서 '키즐(keezle)'과 협업하여 유아용 체험\n활동 게임의 UI를 디자인하고 Unity UGUI 구현을 담당했습니다. 주요 타겟인\n어린이의 눈높이에 맞춰 캐주얼한 타이포그래피와 직관적인 아이콘을 적용하여,\n친숙하고 사용하기 쉬운 인터페이스를 완성했습니다.",
       "post": [
         {
@@ -255,7 +255,7 @@ window.SITE = {
       "title": "Notion",
       "sub": "INSIGHTS / STUDY / REFERENCES",
       "url": "https://amusing-temper-4d5.notion.site/ONE-Archive-3d99c17422b38101b10af0aab3822991?pvs=74",
-      "thumb": "uploads/20261010-063524-Untitled-3.png",
+      "thumb": "uploads/20261010-072116-Untitled-8.jpg",
       "desc": "",
       "post": [],
       "hoverColor": "#000000"
@@ -264,9 +264,8 @@ window.SITE = {
   "theme": {
     "text": {
       "cardTitle": {
-        "weight": 900,
-        "size": 30,
-        "spacing": -0.01
+        "spacing": -0.02,
+        "weight": 800
       },
       "cardSub": {
         "weight": 500,

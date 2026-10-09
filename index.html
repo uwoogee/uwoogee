@@ -156,7 +156,12 @@
   .card-fill {
     z-index: 1;
     /* 반투명 색 (기본 80%, 카드마다 편집기에서 조절) */
-    background: color-mix(in srgb, var(--hover-fill) var(--hover-alpha, 80%), transparent);
+    /* 오른쪽 끝은 살짝 흐려지며 사라짐 (시작·끝 지점은 카드마다 편집기에서 조절) */
+    --hover-solid: color-mix(in srgb, var(--hover-fill) var(--hover-alpha, 80%), transparent);
+    background: linear-gradient(90deg,
+      var(--hover-solid) 0%,
+      var(--hover-solid) var(--fade-start, 85%),
+      transparent var(--fade-end, 100%));
     clip-path: inset(0 100% 0 0);
   }
   /* 기본 글씨는 색 판이 지나간 자리만큼 지워서 반투명 색 아래로 겹쳐 비치지 않게 함 */
@@ -314,7 +319,7 @@
 </div>
 
 <!-- 사이트 내용은 data.js에 들어 있습니다. 편집은 admin.html(편집기)에서 하세요. -->
-<script src="data.js?v=20261010065302"></script>
+<script src="data.js?v=20261010072232"></script>
 <script>
 const SOCIAL_ICONS = {
   instagram: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>',
@@ -514,6 +519,9 @@ function render(site) {
     if (isColor(l.hoverColor)) li.style.setProperty("--hover-fill", l.hoverColor);
     if (isColor(l.hoverText)) li.style.setProperty("--hover-text", l.hoverText);
     if (l.hoverOpacity != null) li.style.setProperty("--hover-alpha", Math.max(0, Math.min(100, Number(l.hoverOpacity))) + "%");
+    const pct = v => Math.max(0, Math.min(100, Number(v))) + "%";
+    if (l.hoverFadeStart != null) li.style.setProperty("--fade-start", pct(l.hoverFadeStart));
+    if (l.hoverFadeEnd != null) li.style.setProperty("--fade-end", pct(l.hoverFadeEnd));
     if (hasPost || !goUrl) li.querySelector(".card-link").addEventListener("click", e => openModal(i, e.currentTarget));
     list.appendChild(li);
   });
