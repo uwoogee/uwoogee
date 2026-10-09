@@ -180,7 +180,7 @@ window.SITE = {
     },
     {
       "title": "GRAND CHASE",
-      "sub": "설명을 입력하세요",
+      "sub": " 2023.10 - 재직 중",
       "icon": "star",
       "url": "",
       "thumb": "uploads/20261010-050159-123.png",
@@ -215,7 +215,7 @@ window.SITE = {
     },
     {
       "title": "CELLBIG",
-      "sub": "설명을 입력하세요",
+      "sub": " 2022.07 - 2023.07",
       "url": "",
       "thumb": "uploads/20261010-050239-123.png",
       "desc": "CELLBIG 소속 UI/UX 디자이너로서 '키즐(keezle)'과 협업하여 유아용 체험\n활동 게임의 UI를 디자인하고 Unity UGUI 구현을 담당했습니다. 주요 타겟인\n어린이의 눈높이에 맞춰 캐주얼한 타이포그래피와 직관적인 아이콘을 적용하여,\n친숙하고 사용하기 쉬운 인터페이스를 완성했습니다.",
@@ -229,8 +229,16 @@ window.SITE = {
           "src": "uploads/20261010-045419-f2bacd_5b4501f01d424ac9a702992ec951a534-.avif"
         },
         {
+          "type": "youtube",
+          "src": "https://youtu.be/ZE2Ctwha6Kw"
+        },
+        {
           "type": "image",
           "src": "uploads/20261010-045421-f2bacd_0b5ce18af7694f5daf8f3ae598755204-.avif"
+        },
+        {
+          "type": "youtube",
+          "src": "https://youtu.be/7bbeAzWT4NM"
         },
         {
           "type": "image",
@@ -238,6 +246,19 @@ window.SITE = {
         }
       ],
       "hoverColor": "#ed008c"
+    },
+    {
+      "type": "category",
+      "title": "Archive"
+    },
+    {
+      "title": "Notion",
+      "sub": "INSIGHTS / STUDY / REFERENCES",
+      "url": "https://amusing-temper-4d5.notion.site/ONE-Archive-3d99c17422b38101b10af0aab3822991?pvs=74",
+      "thumb": "uploads/20261010-063524-Untitled-3.png",
+      "desc": "",
+      "post": [],
+      "hoverColor": "#000000"
     }
   ],
   "theme": {
