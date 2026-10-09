@@ -314,7 +314,7 @@
 </div>
 
 <!-- 사이트 내용은 data.js에 들어 있습니다. 편집은 admin.html(편집기)에서 하세요. -->
-<script src="data.js?v=20261010064223"></script>
+<script src="data.js?v=20261010065302"></script>
 <script>
 const SOCIAL_ICONS = {
   instagram: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>',
@@ -542,6 +542,9 @@ function openModal(i, trigger) {
   if (trigger) {
     document.getElementById("modal-scroll").scrollTop = 0;
     document.getElementById("modal-close").focus();
+    /* 방문 통계: 어떤 작업물을 열어봤는지 기록 */
+    if (window.goatcounter && window.goatcounter.count)
+      window.goatcounter.count({ path: "작업물/" + (l.title || i), title: l.title || "", event: true });
   }
 }
 
@@ -661,6 +664,19 @@ document.addEventListener("keydown", e => {
 });
 
 render(SITE_DATA);
+
+/* ---------- 방문 통계 (GoatCounter) ----------
+   편집기 > 통계 에서 정한 코드로 기록. 내 컴퓨터(localhost)와 편집기 미리보기에서는 자동으로 기록하지 않음.
+   내 휴대폰·PC 방문도 빼고 싶으면 그 기기에서 https://내도메인/#toggle-goatcounter 를 한 번 열기 */
+(function analytics() {
+  const code = ((SITE_DATA.analytics || {}).goatcounter || "").trim();
+  if (!/^[a-z0-9-]+$/i.test(code)) return;
+  const s = document.createElement("script");
+  s.async = true;
+  s.src = "https://gc.zgo.at/count.js";
+  s.dataset.goatcounter = `https://${code}.goatcounter.com/count`;
+  document.head.appendChild(s);
+})();
 
 /* 주소 끝에 #post-2 처럼 붙이면 해당 게시물이 바로 열립니다 */
 const m = location.hash.match(/^#post-(\d+)$/);

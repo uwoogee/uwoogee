@@ -326,5 +326,8 @@ window.SITE = {
       "textLine": 1.95,
       "descLine": 1.85
     }
+  },
+  "analytics": {
+    "goatcounter": "uwoogee"
   }
 };
