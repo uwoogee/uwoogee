@@ -1,0 +1,691 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TNDS Links</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+  :root {
+    /* 팝업: 편집기 > 팝업 메뉴에서 변경 */
+    --modal-gap: 24px;
+    --close-color: #ec8fb0;
+    --close-bg: #ffffff;
+    --scroll-color: #f3b6cb;
+    /* 팝업 안쪽 간격 · 줄 간격 */
+    --pop-top: 32px;          /* 팝업 맨 위 ~ 제목 */
+    --pop-title-gap: 8px;     /* 제목 ~ 소개 */
+    --pop-content-gap: 24px;  /* 소개 ~ 첫 게시글 */
+    --pop-block-gap: 16px;    /* 게시글 블록 사이 */
+    --pop-bottom: 32px;       /* 마지막 ~ 팝업 맨 아래 */
+    --pop-desc-line: 1.7;     /* 소개 문구 행간 */
+    --pop-text-line: 1.8;     /* 게시글 글 행간 */
+    --bg: #000000;
+    --card: #fdfcfd;
+    --pink: #ec8fb0;
+    --pink-soft: #f3b6cb;
+    --text-sub: #e59ab5;
+    --shadow: 0 4px 14px rgba(120, 130, 150, .18);
+    --radius: 12px;
+    /* 글꼴: Pretendard. 요소별 크기·굵기·자간은 아래 TEXT_STYLES + 편집기 > 글꼴 에서 지정 */
+    --font: "Pretendard", -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--pink);
+    font-family: var(--font);
+    min-height: 100vh;
+  }
+  body.modal-open { overflow: hidden; }
+
+  .wrap {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 24px 16px 56px;
+    text-align: center;
+  }
+
+  /* ---------- Header (GIF · 영상 · 이미지) ---------- */
+  .hero { width: 100%; overflow: hidden; background: #000; }
+  /* 원본 비율 그대로 전체가 보이도록 (잘리지 않음). 너무 커지지 않게 화면 높이의 70%까지만 */
+  .hero img, .hero video {
+    display: block; width: 100%; height: auto;
+    max-height: 70vh; object-fit: contain;
+  }
+  .hero:empty { display: none; }
+
+  /* ---------- Profile ---------- */
+  .logo {
+    font-family: var(--font);
+    font-style: italic;
+    color: var(--pink);
+  }
+  .avatar {
+    width: 160px; height: 160px;
+    margin: 28px auto 18px;
+    border-radius: 50%;
+    background: #d6e4fb;
+    display: grid; place-items: center;
+    overflow: hidden;
+  }
+  .avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .avatar .ph { font-size: 64px; }
+  .name {
+  }
+  .kana { margin-top: 6px; color: var(--pink-soft); }
+
+  .socials { display: flex; justify-content: center; gap: 22px; margin: 22px 0 18px; }
+  .socials a { display: inline-flex; transition: transform .2s, opacity .2s; }
+  .socials a:hover { transform: translateY(-2px); opacity: .8; }
+  .socials svg { width: 1em; height: 1em; }
+
+  .bio { line-height: 1.7; color: var(--text-sub); white-space: pre-line; }
+
+  /* ---------- Link cards ----------
+     표지 이미지를 카드 전체 배경으로 깔고, 왼쪽에 흰색 그라데이션 + 글씨 */
+  .links { list-style: none; margin-top: 32px; display: grid; gap: 20px; text-align: left; }
+
+  /* 카테고리 구분선: 이름 + 오른쪽으로 이어지는 가는 선 */
+  .category {
+    display: flex; align-items: center; gap: 14px;
+    margin-top: 18px; padding: 0 2px;
+  }
+  .category:first-child { margin-top: 0; }
+  .category span { white-space: nowrap; }
+  .category::after { content: ""; flex: 1; height: 1px; background: currentColor; opacity: .35; }
+
+  .card {
+    position: relative;
+    height: 108px;
+    border-radius: 14px;
+    overflow: hidden;
+    background: transparent;
+    isolation: isolate;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, .35);
+    container-type: inline-size;
+    /* 카드별 호버 색 (편집기에서 지정, 없으면 기본값) */
+    --hover-fill: #ec8fb0;
+    --hover-text: #ffffff;
+  }
+
+  .card-bg {
+    position: absolute; inset: 0;
+    background: #eee center / cover no-repeat;
+  }
+  .card-bg::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(90deg,
+      rgba(255, 255, 255, .98) 0%,
+      rgba(255, 255, 255, .94) 32%,
+      rgba(255, 255, 255, .55) 56%,
+      rgba(255, 255, 255, 0) 80%);
+  }
+
+  /* 글씨가 놓이는 층 (기본 글씨 층과 색 층이 같은 배치를 씀) */
+  .card-layer {
+    position: absolute; inset: 0;
+    display: flex; align-items: center;
+    padding: 0 0 0 clamp(16px, 4.5cqi, 30px);
+    pointer-events: none;
+  }
+  /* 클릭 영역: 카드 전체를 덮는 투명 버튼/링크 */
+  .card-link {
+    position: absolute; inset: 0; z-index: 2;
+    width: 100%; border: 0; padding: 0; background: none; cursor: pointer;
+  }
+  .card-link:focus-visible { outline: none; }
+
+  /* 호버: 색 판이 왼쪽에서 오른쪽으로 미끄러지듯 덮고, 마우스를 떼면 왼쪽으로 걷힘.
+     색 판 안에 같은 글씨(호버 글씨 색)가 들어 있어서, 경계가 지나가는 자리부터 글씨 색이 바뀜 */
+  .card-fill {
+    z-index: 1;
+    /* 반투명 색 (기본 80%, 카드마다 편집기에서 조절) */
+    background: color-mix(in srgb, var(--hover-fill) var(--hover-alpha, 80%), transparent);
+    clip-path: inset(0 100% 0 0);
+  }
+  /* 기본 글씨는 색 판이 지나간 자리만큼 지워서 반투명 색 아래로 겹쳐 비치지 않게 함 */
+  .card-base { clip-path: inset(0 0 0 0); }
+  .card-fill, .card-base {
+    transition: clip-path .35s cubic-bezier(.4, 0, .2, 1);           /* 걷힐 때 */
+    will-change: clip-path;
+  }
+  .card:hover .card-fill, .card:has(.card-link:focus-visible) .card-fill, .card.demo .card-fill,
+  .card:hover .card-base, .card:has(.card-link:focus-visible) .card-base, .card.demo .card-base {
+    transition: clip-path .6s cubic-bezier(.22, .8, .3, 1);          /* 덮을 때 */
+  }
+  .card:hover .card-fill, .card:has(.card-link:focus-visible) .card-fill, .card.demo .card-fill { clip-path: inset(0 0 0 0); }
+  .card:hover .card-base, .card:has(.card-link:focus-visible) .card-base, .card.demo .card-base { clip-path: inset(0 0 0 100%); }
+  .card-fill .card-title, .card-fill .card-sub { color: var(--hover-text); }
+  .card:has(.card-link:focus-visible) { outline: 2px solid #fff; outline-offset: 3px; }
+  .card-content {
+    position: relative;
+    display: flex; align-items: center; gap: clamp(12px, 3.2cqi, 22px);
+    min-width: 0; max-width: 74%;
+  }
+  .card-text { min-width: 0; }
+  .card-title, .card-sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; }
+  .card-sub { margin-top: 6px; }
+
+  /* ---------- Modal ---------- */
+  .modal {
+    position: fixed; inset: 0; z-index: 50;
+    display: grid; place-items: center;
+    padding: var(--modal-gap) 16px;
+    background: rgba(0, 0, 0, .7);
+    opacity: 0; visibility: hidden;
+    transition: opacity .25s, visibility .25s;
+  }
+  .modal.open { opacity: 1; visibility: visible; }
+  .modal-panel {
+    position: relative;
+    width: min(1120px, 100%);
+    max-height: calc(100vh - var(--modal-gap) * 2);
+    max-height: calc(100dvh - var(--modal-gap) * 2);
+    display: flex; flex-direction: column;
+    overflow: hidden;            /* 네 모서리 모두 같은 라운드로 잘라냄 */
+    background: var(--card);
+    border-radius: 18px;
+    box-shadow: 0 20px 50px rgba(40, 40, 70, .3);
+    transform: translateY(16px) scale(.98);
+    transition: transform .3s;
+  }
+  .modal.open .modal-panel { transform: none; }
+  .modal-scroll {
+    overflow-y: auto; overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin; scrollbar-color: var(--scroll-color) transparent;
+  }
+  .modal-scroll::-webkit-scrollbar { width: 8px; }
+  .modal-scroll::-webkit-scrollbar-track { background: transparent; margin: 18px 0; }
+  .modal-scroll::-webkit-scrollbar-thumb { background: var(--scroll-color); border-radius: 99px; border: 2px solid var(--card); }
+  .modal-head { padding: var(--pop-top) 64px 0; text-align: center; }
+  .modal-title {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+  }
+  .modal-title svg { width: 28px; height: 28px; flex: none; }
+  .modal-desc { margin-top: var(--pop-title-gap); line-height: var(--pop-desc-line); color: var(--text-sub); }
+
+  /* 게시물: 이미지/영상/텍스트를 세로로 이어 붙임 */
+  .post { padding: var(--pop-content-gap) 32px 0; display: flex; flex-direction: column; gap: var(--pop-block-gap); }
+  .post .text { max-width: 760px; margin: 0 auto; text-align: center; }
+  .post figure { margin: 0; }
+  .post img, .post video, .post .ph-media, .post .embed {
+    display: block; width: 100%; border-radius: 10px; background: #f2f2f6;
+  }
+  .post img, .post video { height: auto; }
+  .post .ph-media { aspect-ratio: 16 / 9; display: grid; place-items: center; color: #fff; font-size: 14px; letter-spacing: .1em; }
+  .post .embed { aspect-ratio: 16 / 9; border: 0; }
+  .post figcaption { text-align: center; margin-top: 8px; font-size: 12px; color: var(--text-sub); }
+  .post .text { line-height: var(--pop-text-line); color: #7a6b74; white-space: pre-line; padding: 4px 2px; }
+  .modal-cta {
+    display: inline-block; margin-top: 12px;
+    padding: 12px 22px; border-radius: 999px;
+    background: var(--pink); color: #fff; text-decoration: none;
+    font-size: 14px; font-weight: 500;
+    transition: opacity .2s;
+  }
+  .modal-cta:hover { opacity: .85; }
+  .modal-foot { padding: var(--pop-block-gap) 28px 0; text-align: center; }
+  .modal-scroll { padding-bottom: var(--pop-bottom); }
+  /* 마우스로 잡아 끄는 중 */
+  html.grabbing, html.grabbing * { cursor: grabbing !important; user-select: none; }
+  .modal-scroll img { -webkit-user-drag: none; user-select: none; }
+  .modal-close {
+    position: absolute; top: 16px; right: 18px; z-index: 2;
+    width: 40px; height: 40px; border-radius: 50%;
+    border: 0; cursor: pointer;
+    background: var(--close-bg); color: var(--close-color);
+    font-size: 24px; line-height: 40px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.12);
+  }
+
+  /* ---------- Mobile ---------- */
+  @media (max-width: 560px) {
+    .avatar { width: 128px; height: 128px; }
+    .hero img, .hero video { max-height: 60vh; }
+    .links { gap: 14px; }
+    .card { height: 84px; }
+    .card-sub { margin-top: 4px; }
+    .modal { padding: 0; place-items: end center; }
+    .modal-panel { border-radius: 18px 18px 0 0; max-height: calc(100vh - var(--modal-gap)); max-height: calc(100dvh - var(--modal-gap)); transform: translateY(40px); }
+    .modal-head { padding: calc(var(--pop-top) * .75) 52px 0; }
+    .modal-close { top: 12px; right: 12px; }
+    .post { padding: calc(var(--pop-content-gap) * .75) 12px 0; gap: calc(var(--pop-block-gap) * .65); }
+    .modal-foot { padding: calc(var(--pop-block-gap) * .65) 16px 0; }
+    .modal-scroll { padding-bottom: calc(var(--pop-bottom) * .85); }
+  }
+
+  /* 윈도우 '애니메이션 효과'가 꺼진 환경에서는 다른 움직임은 줄이되,
+     썸네일 카드 호버 슬라이드는 디자인의 일부라 그대로 재생 */
+  @media (prefers-reduced-motion: reduce) {
+    *:not(.card-fill):not(.card-base) { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero" id="hero"></header>
+
+<main class="wrap">
+  <div class="logo" id="logo"></div>
+  <div class="avatar" id="avatar"></div>
+  <h1 class="name" id="name"></h1>
+  <p class="kana" id="kana"></p>
+  <nav class="socials" id="socials" aria-label="SNS"></nav>
+  <p class="bio" id="bio"></p>
+  <ul class="links" id="links"></ul>
+</main>
+
+<!-- 작업물 팝업 -->
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="modal-panel">
+    <button class="modal-close" id="modal-close" aria-label="닫기">×</button>
+    <div class="modal-scroll" id="modal-scroll">
+      <header class="modal-head">
+        <h2 class="modal-title" id="modal-title"></h2>
+        <p class="modal-desc" id="modal-desc"></p>
+      </header>
+      <div class="post" id="post"></div>
+      <div class="modal-foot">
+        <a class="modal-cta" id="modal-cta" target="_blank" rel="noopener">사이트로 이동 →</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 사이트 내용은 data.js에 들어 있습니다. 편집은 admin.html(편집기)에서 하세요. -->
+<script src="data.js?v=20261010060955"></script>
+<script>
+const SOCIAL_ICONS = {
+  instagram: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>',
+  x: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M23 4.6a9 9 0 0 1-2.6.7 4.5 4.5 0 0 0 2-2.5 9 9 0 0 1-2.9 1.1 4.5 4.5 0 0 0-7.7 4.1A12.8 12.8 0 0 1 2.5 3.3a4.5 4.5 0 0 0 1.4 6 4.5 4.5 0 0 1-2-.6v.1a4.5 4.5 0 0 0 3.6 4.4 4.5 4.5 0 0 1-2 .1 4.5 4.5 0 0 0 4.2 3.1A9 9 0 0 1 1 18.3 12.8 12.8 0 0 0 7.9 20.3c8.3 0 12.8-6.9 12.8-12.8v-.6A9 9 0 0 0 23 4.6z"/></svg>',
+  tiktok: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v11.5a3.5 3.5 0 1 1-3.5-3.5"/><path d="M14 3c.5 2.8 2.3 4.5 5 4.8"/></svg>',
+  youtube: '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="1" y="4" width="22" height="16" rx="5"/><path fill="#fff" d="m10 8.5 5.5 3.5-5.5 3.5z"/></svg>',
+  notion: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3" width="17" height="18" rx="3.5"/><path d="M8.5 16.5v-9l7 9v-9"/></svg>',
+  email: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2.5" y="5" width="19" height="14" rx="3"/><path d="m3 6 9 7 9-7"/></svg>'
+};
+const SOCIAL_LABELS = { email: "Email", instagram: "Instagram", x: "X (Twitter)", tiktok: "TikTok", youtube: "YouTube", notion: "Notion" };
+const SOCIAL_ORDER = Object.keys(SOCIAL_LABELS);   /* 아이콘 표시 순서 (이메일이 맨 앞) */
+
+/* ---------- 글자 스타일 기본값 ----------
+   size: px, weight: 100~900, spacing: em
+   mobile: 화면이 좁을 때(560px 이하) 크기 배율
+   편집기에서 바꾼 값은 data.js 의 theme.text 에 저장됨 (admin.html 의 목록과 같이 맞춰둘 것) */
+const TEXT_STYLES = {
+  logo:      { sel: ".logo",        size: 26, weight: 500, spacing: 0.02, color: "#ec8fb0", mobile: 1 },
+  name:      { sel: ".name",        size: 30, weight: 300, spacing: 0.12, color: "#ec8fb0", mobile: 0.87 },
+  kana:      { sel: ".kana",        size: 18, weight: 400, spacing: 0,    color: "#f3b6cb", mobile: 0.9 },
+  socials:   { sel: ".socials a",   size: 36, color: "#ec8fb0", iconOnly: true, mobile: 0.83 },
+  category:  { sel: ".category",    size: 13, weight: 600, spacing: 0.16, color: "#ec8fb0", mobile: 0.92 },
+  bio:       { sel: ".bio",         size: 14, weight: 400, spacing: 0,    color: "#e59ab5", mobile: 0.9 },
+  cardTitle: { sel: ".card-title",  size: 28, weight: 600, spacing: 0.02, color: "#5b5f66", card: true },
+  cardSub:   { sel: ".card-sub",    size: 15, weight: 600, spacing: 0.02, color: "#f39a2b", mobile: 0.85 },
+  postTitle: { sel: ".modal-title", size: 30, weight: 300, spacing: 0.12, color: "#ec8fb0", mobile: 0.8 },
+  postDesc:  { sel: ".modal-desc",  size: 14, weight: 400, spacing: 0,    color: "#e59ab5", mobile: 1 },
+  postText:  { sel: ".post .text",  size: 14, weight: 400, spacing: 0,    color: "#7a6b74", mobile: 1 }
+};
+
+function textStyleCSS(theme) {
+  const custom = theme.text || {};
+  /* 이전 버전(제목/본문 굵기·자간) 설정도 반영 */
+  const legacy = k => ["name", "cardTitle", "postTitle"].includes(k)
+    ? { weight: theme.titleWeight, spacing: theme.titleSpacing }
+    : k === "logo" ? {} : { weight: theme.bodyWeight, spacing: theme.bodySpacing };
+  let css = "", mobile = "";
+  for (const [k, d] of Object.entries(TEXT_STYLES)) {
+    const pick = f => custom[k]?.[f] ?? legacy(k)[f] ?? d[f];
+    const size = Number(pick("size")), weight = Number(pick("weight")), sp = Number(pick("spacing"));
+    const color = /^#[0-9a-f]{3,8}$/i.test(pick("color")) ? pick("color") : d.color;
+    const extra = d.iconOnly ? `color:${color}` : `font-weight:${weight};letter-spacing:${sp}em;color:${color}`;
+    if (d.card) {
+      /* 카드 제목·아이콘: 카드 폭에 비례해서 줄어듦 (데스크톱 카드 폭 기준으로 지정 크기) */
+      css += `${d.sel}{font-size:min(${size}px,${(size * 0.159).toFixed(3)}cqi);${extra}}`;
+      if (!d.iconOnly) mobile += `${d.sel}{letter-spacing:${(sp * 0.6).toFixed(3)}em}`;
+    } else {
+      css += `${d.sel}{font-size:${size}px;${extra}}`;
+      if (d.mobile !== 1) mobile += `${d.sel}{font-size:${(size * d.mobile).toFixed(1)}px}`;
+    }
+  }
+  return css + `@media (max-width:560px){${mobile}}`;
+}
+
+/* placeholder: 파일이 없을 때 파스텔 그라데이션 */
+const PALETTE = [["#c9d8ff","#ffd1e1"],["#ffe0ea","#cfe0ff"],["#d9d2ff","#ffd8e8"],["#cfd3e6","#f7c6d9"],
+                 ["#ffc4cf","#8e86a8"],["#bfe6ee","#f3c5dc"],["#cfe0ff","#fff1f5"],["#f6d0dd","#e8b8c8"]];
+const ph = (i, j = 0) => {
+  const [a, b] = PALETTE[(i + j) % PALETTE.length];
+  return `linear-gradient(${120 + j * 37}deg, ${a}, ${b})`;
+};
+const cssUrl = src => `url("${String(src).replace(/["\\\n]/g, "\\$&")}")`;
+const bg = (src, i, j) => src ? cssUrl(src) : ph(i, j);
+const esc = t => String(t ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const ytId = url => (String(url).match(/(?:youtu\.be\/|v=|shorts\/|embed\/)([\w-]{11})/) || [])[1];
+
+/* 게시물 블록 하나를 { type, src, ... } 형태로 정리 (문자열 단축 표기도 지원) */
+function normalize(b) {
+  if (typeof b === "string") b = { src: b };
+  if (b.text != null && !b.type) return { type: "text", ...b };
+  if (b.type) return b;
+  const src = b.src || "";
+  if (/youtu\.?be/.test(src)) return { type: "youtube", ...b };
+  if (/\.(mp4|webm|mov|m4v)(\?|$)/i.test(src)) return { type: "video", ...b };
+  return { type: "image", ...b };
+}
+
+function renderBlock(raw, i, j) {
+  const b = normalize(raw);
+  if (b.type === "text") {
+    const p = document.createElement("p");
+    p.className = "text";
+    p.textContent = b.text || "";
+    return p;
+  }
+  const f = document.createElement("figure");
+  const poster = b.poster ? ` poster="${esc(b.poster)}"` : "";
+  let media;
+  if (!b.src || (b.type === "youtube" && !ytId(b.src))) {
+    const isVideo = b.type !== "image";
+    media = `<div class="ph-media" style="background:${ph(i, j)}">${isVideo ? "▶ VIDEO" : ""}</div>`;
+  } else if (b.type === "youtube") {
+    media = `<iframe class="embed" src="https://www.youtube-nocookie.com/embed/${ytId(b.src)}" title="YouTube video"
+      allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen loading="lazy"></iframe>`;
+  } else if (b.type === "video") {
+    media = b.loop
+      ? `<video src="${esc(b.src)}" autoplay loop muted playsinline${poster}></video>`
+      : `<video src="${esc(b.src)}" controls playsinline preload="metadata"${poster}></video>`;
+  } else {
+    media = `<img src="${esc(b.src)}" alt="${esc(b.caption || "")}" loading="lazy" decoding="async" draggable="false">`;
+  }
+  f.innerHTML = media + (b.caption ? `<figcaption>${esc(b.caption)}</figcaption>` : "");
+  return f;
+}
+
+/* ---------- render page ---------- */
+let SITE_DATA = window.SITE || { profile: {}, links: [] };
+
+function render(site) {
+  SITE_DATA = site;
+  const p = site.profile || {};
+
+  /* 글자 크기 · 굵기 · 자간 */
+  let styleEl = document.getElementById("text-styles");
+  if (!styleEl) {
+    styleEl = document.createElement("style");
+    styleEl.id = "text-styles";
+    document.head.appendChild(styleEl);
+  }
+  styleEl.textContent = textStyleCSS(site.theme || {});
+
+  /* 팝업 스타일 */
+  const pop = (site.theme || {}).popup || {};
+  const rootStyle = document.documentElement.style;
+  const okColor = c => /^#[0-9a-f]{3,8}$/i.test(c || "");
+  [["--close-color", pop.closeColor], ["--close-bg", pop.closeBg], ["--scroll-color", pop.scrollColor]]
+    .forEach(([k, v]) => okColor(v) ? rootStyle.setProperty(k, v) : rootStyle.removeProperty(k));
+  const POP_VARS = { gap: ["--modal-gap", "px"], top: ["--pop-top", "px"], titleGap: ["--pop-title-gap", "px"],
+    contentGap: ["--pop-content-gap", "px"], blockGap: ["--pop-block-gap", "px"], bottom: ["--pop-bottom", "px"],
+    descLine: ["--pop-desc-line", ""], textLine: ["--pop-text-line", ""] };
+  for (const [key, [cssVar, unit]] of Object.entries(POP_VARS))
+    pop[key] != null && !isNaN(pop[key]) ? rootStyle.setProperty(cssVar, Number(pop[key]) + unit) : rootStyle.removeProperty(cssVar);
+
+  const hero = document.getElementById("hero");
+  const isVideo = /\.(mp4|webm|mov|m4v)(\?|$)/i.test(p.header || "");
+  const heroSrc = hero.firstElementChild?.getAttribute("src");
+  if (!p.header) hero.innerHTML = "";
+  else if (heroSrc !== p.header)   /* 같은 파일이면 다시 그리지 않음 (미리보기 깜빡임 방지) */
+    hero.innerHTML = isVideo
+      ? `<video src="${esc(p.header)}" autoplay loop muted playsinline></video>`
+      : `<img src="${esc(p.header)}" alt="">`;
+  document.getElementById("logo").textContent = p.logo || "";
+  /* 프로필 사진이 없으면 동그라미 자체를 숨김 */
+  const avatar = document.getElementById("avatar");
+  avatar.innerHTML = p.avatar ? `<img src="${esc(p.avatar)}" alt="${esc(p.name)}">` : "";
+  avatar.style.display = p.avatar ? "" : "none";
+  document.getElementById("name").style.marginTop = p.avatar ? "" : "28px";
+  document.getElementById("name").textContent = p.name || "";
+  document.getElementById("kana").textContent = p.kana || "";
+  document.getElementById("bio").textContent = p.bio || "";
+  if (p.name) document.title = p.name;
+
+  const socials = document.getElementById("socials");
+  socials.innerHTML = "";
+  SOCIAL_ORDER.forEach(key => {
+    const url = (p.socials || {})[key];
+    if (!url) return;
+    const a = document.createElement("a");
+    a.href = key === "email" && !/^mailto:/.test(url) ? "mailto:" + url : url;
+    a.target = "_blank"; a.rel = "noopener";
+    a.setAttribute("aria-label", SOCIAL_LABELS[key]);
+    a.innerHTML = SOCIAL_ICONS[key];
+    socials.appendChild(a);
+  });
+  socials.style.display = socials.children.length ? "" : "none";
+
+  const list = document.getElementById("links");
+  list.innerHTML = "";
+  (site.links || []).forEach((l, i) => {
+    const li = document.createElement("li");
+    /* 카테고리 구분선 */
+    if (l.type === "category") {
+      li.className = "category";
+      li.setAttribute("role", "presentation");
+      li.innerHTML = `<span>${esc(l.title)}</span>`;
+      list.appendChild(li);
+      return;
+    }
+    li.className = "card";
+    li.dataset.index = i;
+    /* 게시글이 있으면 카드를 눌렀을 때 팝업, 없으면 링크 주소로 바로 이동 */
+    const hasPost = (l.post || []).length > 0;
+    const goUrl = l.url && l.url !== "#";
+    const inner = `
+      <span class="card-content">
+        <span class="card-text">
+          <span class="card-title" style="display:block">${esc(l.title)}</span>
+          <span class="card-sub" style="display:block">${esc(l.sub)}</span>
+        </span>
+      </span>`;
+    li.innerHTML = `<div class="card-bg"></div>
+      <div class="card-layer card-base">${inner}</div>
+      <div class="card-layer card-fill" aria-hidden="true">${inner}</div>` + (hasPost || !goUrl
+      ? `<button class="card-link" type="button" aria-label="${esc(l.title)} 작업물 보기"></button>`
+      : `<a class="card-link" href="${esc(l.url)}" target="_blank" rel="noopener" aria-label="${esc(l.title)}"></a>`);
+    li.querySelector(".card-bg").style.backgroundImage = bg(l.thumb, i, 0);
+    const isColor = c => /^#[0-9a-f]{3,8}$/i.test(c || "");
+    if (isColor(l.hoverColor)) li.style.setProperty("--hover-fill", l.hoverColor);
+    if (isColor(l.hoverText)) li.style.setProperty("--hover-text", l.hoverText);
+    if (l.hoverOpacity != null) li.style.setProperty("--hover-alpha", Math.max(0, Math.min(100, Number(l.hoverOpacity))) + "%");
+    if (hasPost || !goUrl) li.querySelector(".card-link").addEventListener("click", e => openModal(i, e.currentTarget));
+    list.appendChild(li);
+  });
+}
+
+/* ---------- modal ---------- */
+const modal = document.getElementById("modal");
+const post = document.getElementById("post");
+let lastFocus = null;
+
+function openModal(i, trigger) {
+  const l = SITE_DATA.links[i];
+  if (!l || l.type === "category") return;
+  lastFocus = trigger || null;
+  document.getElementById("modal-title").textContent = l.title || "";
+  document.getElementById("modal-desc").textContent = l.desc || l.sub || "";
+  const cta = document.getElementById("modal-cta");
+  cta.href = l.url || "#";
+  cta.parentElement.style.display = l.url && l.url !== "#" ? "" : "none";
+
+  post.innerHTML = "";
+  (l.post || []).forEach((b, j) => post.appendChild(renderBlock(b, i, j + 1)));
+
+  modal.classList.add("open");
+  document.body.classList.add("modal-open");
+  if (trigger) {
+    document.getElementById("modal-scroll").scrollTop = 0;
+    document.getElementById("modal-close").focus();
+  }
+}
+
+function closeModal() {
+  modal.classList.remove("open");
+  document.body.classList.remove("modal-open");
+  post.querySelectorAll("video").forEach(v => v.pause());
+  setTimeout(() => { if (!modal.classList.contains("open")) post.innerHTML = ""; }, 300);
+  if (lastFocus) lastFocus.focus();
+}
+
+document.getElementById("modal-close").addEventListener("click", closeModal);
+
+/* ---------- 부드러운 스크롤 (아이폰 느낌) — 메인 페이지와 팝업에 공통 적용 ----------
+   - 마우스 휠: 한 칸씩 점프하지 않고 목표 위치까지 미끄러지듯 감속
+   - 마우스로 잡아서 끌기 + 놓으면 관성으로 이어서 미끄러짐
+   - 터치(휴대폰)는 기기 기본 관성 스크롤을 그대로 사용 */
+const SMOOTH_EASE = 0.12;     // 클수록 빨리 멈춤 (0.08~0.2)
+const SMOOTH_FLING = 380;     // 던졌을 때 더 미끄러지는 정도
+
+/* scroller: 실제로 스크롤되는 요소, host: 이벤트를 받을 곳,
+   active(): 지금 이 스크롤을 움직여도 되는지, noDrag: 끌기를 시작하지 않을 요소 */
+function smoothScroll({ scroller, host, active = () => true, noDrag }) {
+  const el = scroller;
+  let current = 0, target = 0, lastSet = 0, raf = 0;
+
+  const maxScroll = () => el.scrollHeight - el.clientHeight;
+  const clamp = v => Math.max(0, Math.min(maxScroll(), v));
+  const setTop = v => { lastSet = Math.round(v); el.scrollTop = v; };
+
+  function loop() {
+    target = clamp(target);
+    current += (target - current) * SMOOTH_EASE;
+    if (Math.abs(target - current) < 0.4) current = target;
+    setTop(current);
+    raf = current === target ? 0 : requestAnimationFrame(loop);
+  }
+  const run = () => { if (!raf) raf = requestAnimationFrame(loop); };
+  const stop = () => { cancelAnimationFrame(raf); raf = 0; };
+
+  /* 스크롤바를 직접 끌거나 키보드·코드로 위치가 바뀌면 그 위치를 기준으로 다시 맞춤 */
+  (host === window ? window : el).addEventListener("scroll", () => {
+    if (Math.abs(el.scrollTop - lastSet) > 2) { stop(); current = target = lastSet = el.scrollTop; }
+  });
+
+  host.addEventListener("wheel", e => {
+    if (e.ctrlKey || !active() || e.defaultPrevented) return;   // 확대/축소, 다른 스크롤 영역은 그대로
+    e.preventDefault();
+    const unit = e.deltaMode === 1 ? 32 : e.deltaMode === 2 ? el.clientHeight : 1;
+    if (!raf) current = target = el.scrollTop;
+    target = clamp(target + e.deltaY * unit);
+    run();
+  }, { passive: false });
+
+  /* 마우스로 잡아 끌기 */
+  let drag = null, moved = false;
+  host.addEventListener("pointerdown", e => {
+    if (e.pointerType !== "mouse" || e.button !== 0 || !active()) return;
+    if (e.target.closest(noDrag)) return;
+    if (host !== window && e.offsetX > el.clientWidth) return;   // 스크롤바 위
+    if (host === window && e.clientX >= document.documentElement.clientWidth) return;
+    stop();
+    drag = { y: e.clientY, top: el.scrollTop, lastY: e.clientY, lastT: performance.now(), v: 0, id: e.pointerId };
+    moved = false;
+  });
+  host.addEventListener("pointermove", e => {
+    if (!drag || e.pointerId !== drag.id) return;
+    const dy = e.clientY - drag.y;
+    if (!moved && Math.abs(dy) < 6) return;       // 살짝 움직인 건 클릭으로 취급
+    if (!moved) {
+      moved = true;
+      document.documentElement.classList.add("grabbing");
+      if (host !== window) el.setPointerCapture(e.pointerId);
+    }
+    const now = performance.now(), dt = Math.max(1, now - drag.lastT);
+    drag.v = drag.v * 0.6 + ((e.clientY - drag.lastY) / dt) * 0.4;   // 속도 (px/ms) 평활화
+    drag.lastY = e.clientY; drag.lastT = now;
+    current = target = clamp(drag.top - dy);
+    setTop(current);
+  });
+  const end = e => {
+    if (!drag || e.pointerId !== drag.id) return;
+    if (moved) {
+      document.documentElement.classList.remove("grabbing");
+      /* 놓기 직전에 멈춰 있었으면 관성 없음 */
+      const v = performance.now() - drag.lastT > 80 ? 0 : drag.v;
+      target = clamp(el.scrollTop - v * SMOOTH_FLING);
+      current = el.scrollTop;
+      run();
+    }
+    drag = null;
+  };
+  host.addEventListener("pointerup", end);
+  host.addEventListener("pointercancel", end);
+  /* 끌고 난 뒤에는 클릭(카드 열기 등)으로 처리하지 않음 */
+  host.addEventListener("click", e => { if (moved) { e.stopPropagation(); e.preventDefault(); moved = false; } }, true);
+  /* 링크·이미지가 끌려 나가는 브라우저 기본 동작 막기 */
+  host.addEventListener("dragstart", e => { if (drag) e.preventDefault(); });
+}
+
+/* 팝업 */
+smoothScroll({
+  scroller: document.getElementById("modal-scroll"),
+  host: document.getElementById("modal-scroll"),
+  noDrag: "a, button, video, iframe, input, textarea, figcaption, .text"
+});
+/* 메인 페이지 (팝업이 열려 있을 때는 멈춤) */
+smoothScroll({
+  scroller: document.scrollingElement || document.documentElement,
+  host: window,
+  active: () => !modal.classList.contains("open"),
+  noDrag: "video, iframe, input, textarea, .modal"
+});
+modal.addEventListener("click", e => { if (e.target === modal) closeModal(); });
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape" && modal.classList.contains("open")) closeModal();
+});
+
+render(SITE_DATA);
+
+/* 주소 끝에 #post-2 처럼 붙이면 해당 게시물이 바로 열립니다 */
+const m = location.hash.match(/^#post-(\d+)$/);
+if (m) openModal(+m[1]);
+
+/* 편집기(admin.html) 실시간 미리보기용 */
+let lastModalKey = null;
+window.addEventListener("message", e => {
+  if (e.origin !== location.origin || !e.data) return;
+  /* 편집기의 "미리보기에서 호버 보기" 버튼 */
+  if (e.data.type === "hover-demo") {
+    modal.classList.remove("open");
+    document.body.classList.remove("modal-open");
+    lastModalKey = null;
+    const card = document.querySelector(`.card[data-index="${e.data.index}"]`);
+    if (!card) return;
+    card.scrollIntoView({ block: "center" });
+    card.classList.add("demo");
+    setTimeout(() => card.classList.remove("demo"), 1600);
+    return;
+  }
+  if (e.data.type !== "site-preview") return;
+  const { site, open, scrollTop, scrollBottom } = e.data;
+  const scroller = document.getElementById("modal-scroll");
+  render(site);
+  if (open == null || !site.links[open]) {
+    lastModalKey = null;
+    modal.classList.remove("open");
+    document.body.classList.remove("modal-open");
+    return;
+  }
+  /* 팝업 내용이 바뀌었을 때만 다시 그려서 깜빡임·영상 재로딩을 막음 */
+  const key = open + JSON.stringify(site.links[open]);
+  if (key !== lastModalKey) {
+    const keep = scroller.scrollTop;
+    openModal(open);
+    scroller.scrollTop = scrollTop ? 0 : keep;
+    lastModalKey = key;
+  }
+  if (scrollTop) scroller.scrollTop = 0;
+  if (scrollBottom) setTimeout(() => scroller.scrollTo({ top: scroller.scrollHeight, behavior: "smooth" }), 100);
+});
+</script>
+</body>
+</html>
