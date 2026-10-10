@@ -291,7 +291,7 @@ window.SITE = {
         "color": "#949494"
       },
       "postTitle": {
-        "color": "#4f4f4f",
+        "color": "#fafafa",
         "size": 63,
         "weight": 800,
         "spacing": 0.01
@@ -300,10 +300,10 @@ window.SITE = {
         "size": 20,
         "weight": 500,
         "spacing": -0.02,
-        "color": "#999999"
+        "color": "#9a9a9a"
       },
       "postText": {
-        "color": "#999999"
+        "color": "#b5b5b5"
       },
       "socials": {
         "color": "#9c9c9c"
@@ -316,14 +316,23 @@ window.SITE = {
       }
     },
     "popup": {
-      "gap": 40,
-      "closeColor": "#7d7d7d",
-      "scrollColor": "#c9c9c9",
+      "gap": 52,
+      "closeColor": "#b0b0b0",
+      "scrollColor": "#3d3d3d",
       "top": 90,
       "titleGap": 22,
       "contentGap": 72,
       "textLine": 1.95,
-      "descLine": 1.85
+      "descLine": 1.85,
+      "bg": "#242628",
+      "width": 1600,
+      "closeX": 35,
+      "closeBg": "#454545",
+      "closeSize": 36
+    },
+    "cursor": {
+      "pointer": "uploads/20261010-090826-hand.png",
+      "normal": "uploads/20261010-090828-arrow.png"
     }
   },
   "analytics": {

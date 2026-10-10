@@ -219,17 +219,55 @@
   }
   .modal-scroll::-webkit-scrollbar { width: 8px; }
   .modal-scroll::-webkit-scrollbar-track { background: transparent; margin: 18px 0; }
-  .modal-scroll::-webkit-scrollbar-thumb { background: var(--scroll-color); border-radius: 99px; border: 2px solid var(--card); }
-  .modal-head { padding: var(--pop-top) 64px 0; text-align: center; }
+  .modal-scroll::-webkit-scrollbar-thumb { background: var(--scroll-color); border-radius: 99px; border: 2px solid var(--pop-bg, var(--card)); }
+
+  /* ---------- 다크 팝업 (편집기 > 팝업 > 스타일) ----------
+     어두운 패널 + 옅은 테두리, 이미지는 테두리 있는 검은 프레임 안, 아래는 꽉 찬 어두운 버튼 */
+  .modal.dark .modal-panel {
+    background: var(--pop-bg, #141414);
+    border: 1px solid rgba(255, 255, 255, .08);
+    border-radius: 24px;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, .6);
+  }
+  .modal.dark .modal-close {
+    /* 다크: 배경색을 정하지 않았으면 투명 */
+    background: var(--close-bg-custom, transparent); box-shadow: none;
+    font-size: var(--close-x, 30px); font-weight: 300; transition: opacity .2s;
+  }
+  .modal.dark .modal-close:hover { opacity: .65; }
+  .modal.dark .post figure {
+    background: #000;
+    border: 1px solid rgba(255, 255, 255, .07);
+    border-radius: 16px;
+    padding: var(--pop-frame-pad, 0px);
+    overflow: hidden;
+  }
+  .modal.dark .post img, .modal.dark .post video, .modal.dark .post .embed {
+    background: #000;
+    border-radius: calc(16px - min(var(--pop-frame-pad, 0px), 8px) - 1px);
+  }
+  .modal.dark .post .ph-media { background: #1c1c1c !important; border-radius: 12px; }
+  .modal.dark .post figcaption { margin: 0; padding: 10px 14px; color: #8a8a8a; }
+  .modal.dark .modal-foot { padding: var(--pop-block-gap) 32px 0; }
+  .modal.dark .modal-cta {
+    display: block; width: 100%; margin-top: 0;
+    padding: 16px 20px; border-radius: 14px;
+    background: var(--pop-btn-bg, #262626); color: var(--pop-btn-text, #ffffff);
+    font-size: 15px; font-weight: 500; text-align: center;
+    transition: filter .2s;
+  }
+  .modal.dark .modal-cta:hover { opacity: 1; filter: brightness(1.25); }
+  .modal-head { padding: var(--pop-top) 64px 0; text-align: var(--pop-align, center); }
   .modal-title {
-    display: flex; align-items: center; justify-content: center; gap: 10px;
+    display: flex; align-items: center; justify-content: var(--pop-justify, center); gap: 10px;
   }
   .modal-title svg { width: 28px; height: 28px; flex: none; }
   .modal-desc { margin-top: var(--pop-title-gap); line-height: var(--pop-desc-line); color: var(--text-sub); }
 
   /* 게시물: 이미지/영상/텍스트를 세로로 이어 붙임 */
   .post { padding: var(--pop-content-gap) 32px 0; display: flex; flex-direction: column; gap: var(--pop-block-gap); }
-  .post .text { max-width: 760px; margin: 0 auto; text-align: center; }
+  .post .text { max-width: 760px; margin: 0 auto; text-align: var(--pop-align, center); }
+  .modal.align-left .post .text, .modal.align-left .post figcaption { margin-left: 0; text-align: left; }
   .post figure { margin: 0; }
   .post img, .post video, .post .ph-media, .post .embed {
     display: block; width: 100%; border-radius: 10px; background: #f2f2f6;
@@ -256,12 +294,14 @@
     -webkit-user-drag: none; user-select: none; -webkit-user-select: none;
     -webkit-touch-callout: none;
   }
+  /* 닫기(X) 버튼: 버튼 크기·X 크기는 편집기 > 팝업 에서 조절 */
   .modal-close {
     position: absolute; top: 16px; right: 18px; z-index: 2;
-    width: 40px; height: 40px; border-radius: 50%;
-    border: 0; cursor: pointer;
+    width: var(--close-size, 40px); height: var(--close-size, 40px); border-radius: 50%;
+    border: 0; padding: 0; cursor: pointer;
+    display: grid; place-items: center;
     background: var(--close-bg); color: var(--close-color);
-    font-size: 24px; line-height: 40px;
+    font-size: var(--close-x, 24px); line-height: 1;
     box-shadow: 0 2px 8px rgba(0,0,0,.12);
   }
 
@@ -280,6 +320,8 @@
     .card { height: 84px; }
     .card-sub { margin-top: 4px; }
     .modal { padding: 0; place-items: end center; }
+    .modal.dark .modal-panel { border-radius: 24px 24px 0 0; border-bottom: 0; }
+    .modal.dark .modal-foot { padding: calc(var(--pop-block-gap) * .65) 16px 0; }
     .modal-panel { width: 100%; border-radius: 18px 18px 0 0; max-height: calc(100vh - var(--modal-gap)); max-height: calc(100dvh - var(--modal-gap)); transform: translateY(40px); }
     .modal-head { padding: calc(var(--pop-top) * .75) 52px 0; }
     .modal-close { top: 12px; right: 12px; }
@@ -327,7 +369,7 @@
 </div>
 
 <!-- 사이트 내용은 data.js에 들어 있습니다. 편집은 admin.html(편집기)에서 하세요. -->
-<script src="data.js?v=20261010074350"></script>
+<script src="data.js?v=20261010092720"></script>
 <script>
 const SOCIAL_ICONS = {
   instagram: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>',
@@ -433,6 +475,43 @@ function renderBlock(raw, i, j) {
   return f;
 }
 
+/* ---------- 마우스 커서 (편집기 > 커서) ----------
+   올린 이미지를 지정한 크기로 줄여서 커서로 사용. 휴대폰·태블릿에는 커서가 없어서 영향 없음 */
+let cursorKey = null;
+function applyCursor(c) {
+  const key = JSON.stringify(c || {});
+  if (key === cursorKey) return;            // 바뀐 게 없으면 다시 만들지 않음
+  cursorKey = key;
+  let el = document.getElementById("cursor-style");
+  if (!c || !c.normal) { if (el) el.textContent = ""; return; }
+  const size = Math.max(16, Math.min(128, Number(c.size) || 32));
+  const hot = c.hotspot === "center" ? [size / 2, size / 2] : [0, 0];
+  /* 이미지를 커서 크기로 줄인 PNG 로 만들기 */
+  const shrink = src => new Promise(resolve => {
+    if (!src) return resolve(null);
+    const img = new Image();
+    img.onload = () => {
+      const k = Math.min(size / img.naturalWidth, size / img.naturalHeight);
+      const w = Math.max(1, Math.round(img.naturalWidth * k)), h = Math.max(1, Math.round(img.naturalHeight * k));
+      const cv = document.createElement("canvas");
+      cv.width = w; cv.height = h;
+      cv.getContext("2d").drawImage(img, 0, 0, w, h);
+      try { resolve(cv.toDataURL("image/png")); } catch { resolve(null); }
+    };
+    img.onerror = () => resolve(null);
+    img.src = src;
+  });
+  Promise.all([shrink(c.normal), shrink(c.pointer)]).then(([n, ptr]) => {
+    if (key !== cursorKey || !n) return;
+    if (!el) { el = document.createElement("style"); el.id = "cursor-style"; document.head.appendChild(el); }
+    const at = `${Math.round(hot[0])} ${Math.round(hot[1])}`;
+    el.textContent =
+      `html, body, body * { cursor: url("${n}") ${at}, auto; }` +
+      `a, a *, button, button *, summary, label, .card-link, .modal-close, input[type=range], [role=button] ` +
+      `{ cursor: url("${ptr || n}") ${at}, pointer; }`;
+  });
+}
+
 /* ---------- render page ---------- */
 let SITE_DATA = window.SITE || { profile: {}, links: [] };
 
@@ -453,13 +532,26 @@ function render(site) {
   const pop = (site.theme || {}).popup || {};
   const rootStyle = document.documentElement.style;
   const okColor = c => /^#[0-9a-f]{3,8}$/i.test(c || "");
-  [["--close-color", pop.closeColor], ["--close-bg", pop.closeBg], ["--scroll-color", pop.scrollColor]]
+  [["--close-color", pop.closeColor], ["--close-bg", pop.closeBg], ["--close-bg-custom", pop.closeBg], ["--scroll-color", pop.scrollColor]]
     .forEach(([k, v]) => okColor(v) ? rootStyle.setProperty(k, v) : rootStyle.removeProperty(k));
-  const POP_VARS = { width: ["--modal-width", "px"], gap: ["--modal-gap", "px"], top: ["--pop-top", "px"], titleGap: ["--pop-title-gap", "px"],
+  const POP_VARS = { closeSize: ["--close-size", "px"], closeX: ["--close-x", "px"], width: ["--modal-width", "px"], gap: ["--modal-gap", "px"], top: ["--pop-top", "px"], titleGap: ["--pop-title-gap", "px"],
     contentGap: ["--pop-content-gap", "px"], blockGap: ["--pop-block-gap", "px"], bottom: ["--pop-bottom", "px"],
     descLine: ["--pop-desc-line", ""], textLine: ["--pop-text-line", ""] };
   for (const [key, [cssVar, unit]] of Object.entries(POP_VARS))
     pop[key] != null && !isNaN(pop[key]) ? rootStyle.setProperty(cssVar, Number(pop[key]) + unit) : rootStyle.removeProperty(cssVar);
+
+  /* 팝업 스타일: 다크(기본) / 라이트, 정렬, 색 */
+  const modalEl = document.getElementById("modal");
+  const dark = pop.style !== "light";
+  modalEl.classList.toggle("dark", dark);
+  modalEl.classList.toggle("align-left", pop.align === "left");
+  rootStyle.setProperty("--pop-align", pop.align === "left" ? "left" : "center");
+  rootStyle.setProperty("--pop-justify", pop.align === "left" ? "flex-start" : "center");
+  [["--pop-bg", dark ? pop.bg : null], ["--pop-btn-bg", pop.btnBg], ["--pop-btn-text", pop.btnText]]
+    .forEach(([k, v]) => okColor(v) ? rootStyle.setProperty(k, v) : rootStyle.removeProperty(k));
+  pop.framePad != null ? rootStyle.setProperty("--pop-frame-pad", Number(pop.framePad) + "px") : rootStyle.removeProperty("--pop-frame-pad");
+
+  applyCursor((site.theme || {}).cursor);
 
   const hero = document.getElementById("hero");
   const isVideo = /\.(mp4|webm|mov|m4v)(\?|$)/i.test(p.header || "");
