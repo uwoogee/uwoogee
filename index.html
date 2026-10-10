@@ -263,6 +263,16 @@
   }
   .modal-title svg { width: 28px; height: 28px; flex: none; }
   .modal-desc { margin-top: var(--pop-title-gap); line-height: var(--pop-desc-line); color: var(--text-sub); }
+  /* 기여도 · 날짜 (적은 항목만 표시) */
+  .modal-meta {
+    display: flex; flex-wrap: wrap; gap: 8px 28px;
+    justify-content: var(--pop-justify, center);
+    margin-top: 18px;
+  }
+  .modal-meta:empty { display: none; }
+  .modal-meta div { display: flex; gap: 10px; align-items: baseline; }
+  .modal-meta dt { opacity: .55; font-weight: 500; }
+  .modal-meta dd { margin: 0; }
 
   /* 게시물: 이미지/영상/텍스트를 세로로 이어 붙임 */
   .post { padding: var(--pop-content-gap) 32px 0; display: flex; flex-direction: column; gap: var(--pop-block-gap); }
@@ -359,6 +369,7 @@
       <header class="modal-head">
         <h2 class="modal-title" id="modal-title"></h2>
         <p class="modal-desc" id="modal-desc"></p>
+        <dl class="modal-meta" id="modal-meta"></dl>
       </header>
       <div class="post" id="post"></div>
       <div class="modal-foot">
@@ -369,7 +380,7 @@
 </div>
 
 <!-- 사이트 내용은 data.js에 들어 있습니다. 편집은 admin.html(편집기)에서 하세요. -->
-<script src="data.js?v=20261010092720"></script>
+<script src="data.js?v=20261010233559"></script>
 <script>
 const SOCIAL_ICONS = {
   instagram: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>',
@@ -397,6 +408,7 @@ const TEXT_STYLES = {
   cardSub:   { sel: ".card-sub",    size: 15, weight: 600, spacing: 0.02, color: "#f39a2b", mobile: 0.85 },
   postTitle: { sel: ".modal-title", size: 30, weight: 300, spacing: 0.12, color: "#ec8fb0", mobile: 0.8 },
   postDesc:  { sel: ".modal-desc",  size: 14, weight: 400, spacing: 0,    color: "#e59ab5", mobile: 1 },
+  postMeta:  { sel: ".modal-meta",  size: 14, weight: 500, spacing: 0,    color: "#b5b5b5", mobile: 0.93 },
   postText:  { sel: ".post .text",  size: 14, weight: 400, spacing: 0,    color: "#7a6b74", mobile: 1 }
 };
 
@@ -638,6 +650,11 @@ function openModal(i, trigger) {
   lastFocus = trigger || null;
   document.getElementById("modal-title").textContent = l.title || "";
   document.getElementById("modal-desc").textContent = l.desc || l.sub || "";
+  /* 기여도 · 날짜: 적은 것만 */
+  const meta = document.getElementById("modal-meta");
+  meta.innerHTML = [["기여도", l.contribution], ["날짜", l.date]]
+    .filter(([, v]) => v && String(v).trim())
+    .map(([k, v]) => `<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join("");
   const cta = document.getElementById("modal-cta");
   cta.href = l.url || "#";
   cta.parentElement.style.display = l.url && l.url !== "#" ? "" : "none";

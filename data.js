@@ -68,7 +68,9 @@ window.SITE = {
           "src": "uploads/20261010-035935-f2bacd_a04643cb8d1a4268bc50ad8691fcea6f-.avif"
         }
       ],
-      "hoverColor": "#ffae00"
+      "hoverColor": "#ffae00",
+      "contribution": "UI 디자인 100% 기획 100%",
+      "date": "2026.05 - 2026.09"
     },
     {
       "title": "AETHER GEAR",
@@ -115,7 +117,9 @@ window.SITE = {
           "src": "uploads/20261010-043833-f2bacd_94ca075f37c343b09bbfc0f1ae7c6778-.avif"
         }
       ],
-      "hoverColor": "#937448"
+      "hoverColor": "#937448",
+      "contribution": "UI 디자인 100% 기획 100%",
+      "date": "2025.10 - 2026.01"
     },
     {
       "title": "VERTICAL SUBCULTURE",
@@ -138,7 +142,9 @@ window.SITE = {
           "src": "uploads/20261010-044227-f2bacd_72bfa1a4305c4b22a47840449c2b1143-.avif"
         }
       ],
-      "hoverColor": "#bd0000"
+      "hoverColor": "#bd0000",
+      "contribution": "UI 디자인 100% 기획 100%",
+      "date": "2023.09 (2주)"
     },
     {
       "title": "BUBBLE FIGHTER",
@@ -172,7 +178,9 @@ window.SITE = {
           "src": "uploads/20261010-045330-f2bacd_44c8897926f44ed3b4a9961c000ae3da-.avif"
         }
       ],
-      "hoverColor": "#66c4ff"
+      "hoverColor": "#66c4ff",
+      "contribution": "UI 디자인 100%",
+      "date": "2023.01 - 2023.05"
     },
     {
       "type": "category",
@@ -211,7 +219,9 @@ window.SITE = {
           "src": "uploads/20261010-045213-f2bacd_8db524cc976048ec90f910634190ae13-.avif"
         }
       ],
-      "hoverColor": "#ffa200"
+      "hoverColor": "#ffa200",
+      "contribution": "회사 작업물 UI 100%",
+      "date": " 2023.10 - 재직 중"
     },
     {
       "title": "CELLBIG",
@@ -245,7 +255,9 @@ window.SITE = {
           "src": "uploads/20261010-045423-f2bacd_71ac81d84e954a308b4d77da531f6a86-.avif"
         }
       ],
-      "hoverColor": "#ed008c"
+      "hoverColor": "#ed008c",
+      "contribution": "회사 작업물 UI 100% ",
+      "date": " 2022.07 - 2023.07"
     },
     {
       "type": "category",
