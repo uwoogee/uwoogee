@@ -66,6 +66,27 @@
     margin: 0 auto;
     padding: 24px 16px 56px;
     text-align: center;
+    position: relative; z-index: 1;   /* 스티커(뒤쪽)보다 위 */
+  }
+  .hero { position: relative; z-index: 1; }
+
+  /* ---------- 스크롤하면 스티커가 착! 붙음 (편집기 > 스티커) ---------- */
+  body { position: relative; }
+  .stickers { position: absolute; left: 0; top: 0; width: 100%; pointer-events: none; z-index: 0; overflow: hidden; }
+  .stickers.front { z-index: 5; }
+  .sticker {
+    position: absolute; display: block; height: auto;
+    opacity: 0; transform: rotate(var(--r)) scale(1.6);
+    image-rendering: auto;
+    filter: var(--sticker-shadow, drop-shadow(0 4px 6px rgba(0, 0, 0, .45)));
+  }
+  .sticker.stuck { animation: sticker-slap .55s cubic-bezier(.2, .9, .3, 1.25) forwards; }
+  .sticker.instant { opacity: 1; transform: rotate(var(--r)) scale(1); }
+  @keyframes sticker-slap {
+    0%   { opacity: 0; transform: rotate(calc(var(--r) + 18deg)) scale(1.7); }
+    55%  { opacity: 1; transform: rotate(var(--r)) scale(.9); }
+    80%  { transform: rotate(var(--r)) scale(1.04); }
+    100% { opacity: 1; transform: rotate(var(--r)) scale(1); }
   }
 
   /* ---------- Header (GIF · 영상 · 이미지) ---------- */
@@ -528,6 +549,9 @@
 
 <header class="hero" id="hero"></header>
 
+<div class="stickers" id="stickers" aria-hidden="true"></div>
+<div class="stickers front" id="stickers-front" aria-hidden="true"></div>
+
 <main class="wrap">
   <div class="logo" id="logo"></div>
   <div class="avatar" id="avatar"></div>
@@ -557,7 +581,7 @@
 </div>
 
 <!-- 사이트 내용은 data.js에 들어 있습니다. 편집은 admin.html(편집기)에서 하세요. -->
-<script src="data.js?v=20261011151743"></script>
+<script src="data.js?v=20261011160841"></script>
 <script>
 const SOCIAL_ICONS = {
   instagram: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>',
@@ -651,7 +675,7 @@ function renderBlock(raw, i, j) {
     const isVideo = b.type !== "image";
     media = `<div class="ph-media" style="background:${ph(i, j)}">${isVideo ? "▶ VIDEO" : ""}</div>`;
   } else if (b.type === "youtube") {
-    media = `<iframe class="embed" src="https://www.youtube-nocookie.com/embed/${ytId(b.src)}" title="YouTube video"
+    media = `<iframe class="embed" src="https://www.youtube-nocookie.com/embed/${ytId(b.src)}?enablejsapi=1" title="YouTube video"
       allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen loading="lazy"></iframe>`;
   } else if (b.type === "video") {
     media = b.loop
@@ -663,6 +687,126 @@ function renderBlock(raw, i, j) {
   f.innerHTML = media + (b.caption ? `<figcaption>${esc(b.caption)}</figcaption>` : "");
   return f;
 }
+
+/* ---------- 스티커: 스크롤해서 그 위치가 화면에 들어오면 착! 붙고, 붙은 채로 남음 ----------
+   카드 양옆 빈 공간에 좌우 번갈아 배치. 같은 설정이면 매번 같은 배치(번호로 섞음) */
+const stickerState = { cfg: null, key: "", observer: null, timer: 0 };
+function seededRandom(seed) {          // 같은 번호면 같은 순서의 '랜덤' 값
+  let a = (Number(seed) || 1) * 2654435761 >>> 0;
+  return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+}
+function scheduleStickers(cfg) {
+  stickerState.cfg = cfg || null;
+  clearTimeout(stickerState.timer);
+  stickerState.timer = setTimeout(layoutStickers, 120);
+}
+function layoutStickers() {
+  const box = document.getElementById("stickers");              // 카드 뒤 층
+  const frontBox = document.getElementById("stickers-front");   // 헤더·카드 위 층
+  const c = stickerState.cfg;
+  const imgs = c && c.enabled ? (c.images || []).filter(Boolean) : [];
+  const docH = Math.max(document.documentElement.scrollHeight, document.body.scrollHeight);
+  const vw = document.documentElement.clientWidth;
+  const key = JSON.stringify([c, docH, vw]);
+  if (key === stickerState.key) return;             // 바뀐 게 없으면 다시 배치하지 않음
+  stickerState.key = key;
+  if (stickerState.observer) stickerState.observer.disconnect();
+  box.innerHTML = frontBox.innerHTML = "";
+  if (!imgs.length) { box.style.height = frontBox.style.height = "0px"; return; }
+  [box, frontBox].forEach(b => {
+    b.style.height = docH + "px";
+    b.style.setProperty("--sticker-shadow", c.shadow === false ? "none" : "drop-shadow(0 4px 6px rgba(0, 0, 0, .45))");
+  });
+  /* 층 정하기: auto(기본) = 썸네일 카드 영역 위쪽(헤더·프로필)은 위에, 카드 영역은 카드 뒤에
+                behind = 전부 카드 뒤 / front = 전부 위 */
+  const layer = c.layer || "auto";
+  const cardsTop = document.getElementById("links").getBoundingClientRect().top + window.scrollY;
+
+  const rand = seededRandom(c.seed || 1);
+  const small = vw < 560;
+  const base = Math.max(30, Number(c.size) || 110) * (small ? .6 : 1);
+  const vary = Math.max(0, Math.min(.9, Number(c.sizeVary ?? .35)));
+  const rot = Math.max(0, Math.min(90, Number(c.rotate ?? 22)));
+  const gapY = 900 / Math.max(1, Math.min(20, Number(c.density) || 5));   // 밀도: 화면 높이 900px 당 개수
+  /* 카드 영역 (스티커는 기본적으로 이 양옆에) */
+  const wrap = document.querySelector(".wrap").getBoundingClientRect();
+  const left = wrap.left + 16, right = wrap.right - 16;
+  const hero = document.getElementById("hero");
+  const startY = c.fromTop ? 40 : Math.max(40, hero.offsetHeight + 40);
+  const order = imgs.map((_, i) => i).sort(() => rand() - .5);
+
+  let y = startY, k = 0;
+  while (y < docH - base * .6) {
+    const size = base * (1 - vary + rand() * vary * 2);
+    const side = k % 2 === 0 ? (rand() < .5 ? "L" : "R") : (k % 4 === 1 ? "R" : "L");
+    /* 양옆 여백 안쪽 + 카드 가장자리에 살짝 걸치게 */
+    const overlap = size * .35;
+    let x = side === "L"
+      ? rand() * Math.max(0, left - size + overlap)
+      : right - overlap + rand() * Math.max(0, vw - right - size + overlap);
+    x = Math.max(-size * .2, Math.min(vw - size * .8, x));
+    const img = document.createElement("img");
+    img.className = "sticker";
+    img.src = imgs[order[k % order.length]];
+    img.alt = "";
+    img.draggable = false;
+    Object.assign(img.style, { left: x + "px", top: y + (rand() - .5) * gapY * .5 + "px", width: size + "px" });
+    img.style.setProperty("--r", ((rand() * 2 - 1) * rot).toFixed(1) + "deg");
+    const top = parseFloat(img.style.top);
+    const onTop = layer === "front" || (layer === "auto" && top + size / 2 < cardsTop);
+    (onTop ? frontBox : box).appendChild(img);
+    y += gapY * (.7 + rand() * .6);
+    k++;
+  }
+
+  /* 위에서부터 순서대로 (같은 높이면 왼쪽부터) */
+  stickerState.list = [...box.querySelectorAll(".sticker"), ...frontBox.querySelectorAll(".sticker")]
+    .sort((a, b) => parseFloat(a.style.top) - parseFloat(b.style.top) || parseFloat(a.style.left) - parseFloat(b.style.left));
+  stickerState.queue = new Set();
+  stickerState.gap = Math.max(40, Math.min(1500, Number(c.interval ?? 220)));
+  clearInterval(stickerState.pump); stickerState.pump = 0;
+  /* 화면에 들어오면 착! 단, 방문자가 스크롤을 처음 움직이기 전까지는 아무것도 붙지 않음.
+     한꺼번에 붙지 않고 줄을 세워서 한 장씩 → 아래 것이 먼저 보이면 그 위에 아직 안 붙은 것부터 차례로 */
+  stickerState.observer = new IntersectionObserver(entries => entries.forEach(en => {
+    if (!en.isIntersecting) return;
+    const idx = stickerState.list.indexOf(en.target);
+    stickerState.list.slice(0, idx + 1).forEach(s => {
+      if (!s.classList.contains("stuck") && !s.classList.contains("instant")) stickerState.queue.add(s);
+      stickerState.observer.unobserve(s);
+    });
+    pumpStickers();
+  }), { threshold: .35 });
+  if (stickerState.scrolled) watchStickers();
+}
+/* 줄 선 스티커를 맨 위 것부터 일정 간격으로 하나씩 붙임 */
+function pumpStickers() {
+  if (stickerState.pump || !stickerState.queue.size) return;
+  const next = () => {
+    const first = stickerState.list.find(s => stickerState.queue.has(s));
+    if (!first) { clearInterval(stickerState.pump); stickerState.pump = 0; return; }
+    stickerState.queue.delete(first);
+    first.classList.add("stuck");
+  };
+  next();
+  stickerState.pump = setInterval(next, stickerState.gap);
+}
+/* 스크롤이 시작된 뒤: 지나온 위치는 바로 붙은 상태로, 나머지는 화면에 들어올 때 착! */
+function watchStickers() {
+  document.querySelectorAll(".stickers .sticker:not(.stuck):not(.instant)").forEach(s => {
+    if (parseFloat(s.style.top) + 40 < window.scrollY) s.classList.add("instant");
+    else stickerState.observer && stickerState.observer.observe(s);
+  });
+}
+stickerState.scrolled = false;
+window.addEventListener("scroll", function firstScroll() {
+  window.removeEventListener("scroll", firstScroll);
+  stickerState.scrolled = true;
+  watchStickers();
+}, { passive: true });
+/* 창 크기가 바뀌거나 이미지가 늦게 로드돼서 페이지 길이가 바뀌면 다시 배치 */
+window.addEventListener("resize", () => scheduleStickers(stickerState.cfg));
+window.addEventListener("load", () => scheduleStickers(stickerState.cfg));
+new ResizeObserver(() => scheduleStickers(stickerState.cfg)).observe(document.body);
 
 /* ---------- 클릭하면 픽셀 별이 팡! (편집기 > 커서 > 클릭 효과) ---------- */
 const PIXEL_STARS = [
@@ -856,6 +1000,7 @@ function render(site) {
   pop.framePad != null ? rootStyle.setProperty("--pop-frame-pad", Number(pop.framePad) + "px") : rootStyle.removeProperty("--pop-frame-pad");
 
   applyCursor((site.theme || {}).cursor);
+  scheduleStickers(site.stickers);
   clickFx.cfg = (site.theme || {}).clickFx || null;
 
   const hero = document.getElementById("hero");
@@ -954,6 +1099,7 @@ function openModal(i, trigger) {
 
   post.innerHTML = "";
   (l.post || []).forEach((b, j) => post.appendChild(renderBlock(b, i, j + 1)));
+  post.querySelectorAll("iframe.embed").forEach(watchYouTube);   // 유튜브 재생 중엔 배경음악 끄기
 
   modal.classList.add("open");
   document.body.classList.add("modal-open");
@@ -970,7 +1116,7 @@ function closeModal() {
   modal.classList.remove("open");
   document.body.classList.remove("modal-open");
   post.querySelectorAll("video").forEach(v => v.pause());
-  setTimeout(() => { if (!modal.classList.contains("open")) post.innerHTML = ""; }, 300);
+  setTimeout(() => { if (!modal.classList.contains("open")) post.innerHTML = ""; forgetGoneMedia(); }, 300);
   if (lastFocus) lastFocus.focus();
 }
 
@@ -1210,82 +1356,170 @@ function playIris(c, { onClosed, onOpen } = {}) {
   }, IRIS_CLOSE_MS);
 }
 
-/* ---------- 진입 화면 배경음악 ----------
-   브라우저 정책상 소리 있는 자동재생은 막힐 수 있음 → 막히면 화면을 처음 클릭/터치할 때 재생 시작.
-   음소거 버튼 + 볼륨 막대는 진입 화면에서만 (설정에 따라 메인에서도 계속 재생 가능) */
+/* ---------- 배경음악 (진입 화면 · 메인 페이지 공통) ----------
+   - 켜질 때 페이드인, 꺼질 때 페이드아웃 (시간은 편집기 > 음악 에서)
+   - 브라우저 정책상 소리 있는 자동재생이 막히면 → 화면을 처음 클릭/터치할 때 재생 시작
+   - 화면 구석에 음소거 버튼 + 볼륨 막대 (방문자가 정한 볼륨은 기억)
+   - 영상·유튜브가 소리 내며 재생되는 동안은 자동으로 서서히 꺼졌다가, 멈추면 다시 켜짐 */
 const SPEAKER_ON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4V5z" fill="currentColor"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>`;
 const SPEAKER_OFF = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4V5z" fill="currentColor"/><path d="m16 9 5 6M21 9l-5 6"/></svg>`;
-const introMusic = { audio: null, ui: null, unlock: null };
 
-function setupIntroMusic(m) {
-  stopIntroMusic(false);
-  if (!m || !m.src) return;
-  let vol = Number(m.volume ?? .5);
-  try { const saved = localStorage.getItem("introVolume"); if (saved !== null) vol = Number(saved); } catch {}
+/* 볼륨을 ms 동안 to 까지 부드럽게 바꿈 */
+function fadeVolume(audio, to, ms, done) {
+  clearInterval(audio._fade);
+  const from = audio.volume, t0 = performance.now();
+  if (ms <= 0) { audio.volume = to; done && done(); return; }
+  audio._fade = setInterval(() => {
+    const k = Math.min(1, (performance.now() - t0) / ms);
+    audio.volume = Math.max(0, Math.min(1, from + (to - from) * k));
+    if (k >= 1) { clearInterval(audio._fade); done && done(); }
+  }, 30);
+}
+
+/* 음악 하나 (m: 설정, key: 볼륨 기억용 이름, skipUnlock: 이 요소를 눌렀을 땐 재생 시작 안 함) */
+function createBgm(m, key, skipUnlock) {
+  const fadeMs = Math.max(0, Number(m.fade ?? 1.5)) * 1000;
+  let target = Number(m.volume ?? .5);
+  try { const saved = localStorage.getItem(key); if (saved !== null) target = Number(saved); } catch {}
+  target = Math.max(0, Math.min(1, target));
   const audio = new Audio(m.src);
   audio.loop = m.loop !== false;
-  audio.volume = Math.max(0, Math.min(1, vol));
-  introMusic.audio = audio;
+  audio.volume = 0;
+  const bgm = { audio, ui: null, unlock: null, ducked: false, stopped: false };
 
   const ui = document.createElement("div");
   ui.className = "intro-sound" + (String(m.position || "").includes("top") ? " top" : "") + (String(m.position || "").includes("left") ? " left" : "");
   if (/^#[0-9a-f]{3,8}$/i.test(m.color || "")) ui.style.setProperty("--snd-color", m.color);
   ui.innerHTML = `<button type="button" class="snd-btn" aria-label="소리 켜기/끄기"></button>
-    <input type="range" min="0" max="1" step="0.01" aria-label="볼륨" value="${audio.volume}">
+    <input type="range" min="0" max="1" step="0.01" aria-label="볼륨" value="${target}">
     <span class="snd-hint"></span>`;
   document.body.appendChild(ui);
-  introMusic.ui = ui;
+  bgm.ui = ui;
   const btn = ui.querySelector(".snd-btn"), range = ui.querySelector("input"), hint = ui.querySelector(".snd-hint");
   const paint = () => {
-    const silent = audio.paused || audio.muted || audio.volume === 0;
-    btn.innerHTML = silent ? SPEAKER_OFF : SPEAKER_ON;
-    hint.textContent = audio.paused ? (m.hint ?? "소리 켜기") : "";
-    hint.style.display = audio.paused && hint.textContent ? "" : "none";
+    const waiting = audio.paused && !bgm.ducked;
+    btn.innerHTML = waiting || audio.muted || target === 0 ? SPEAKER_OFF : SPEAKER_ON;
+    hint.textContent = waiting ? (m.hint || "소리 켜기") : "";
+    hint.style.display = hint.textContent ? "" : "none";
   };
-  const play = () => audio.play().then(paint).catch(paint);
+  /* 페이드인으로 재생 */
+  bgm.play = () => {
+    if (bgm.stopped) return;
+    audio.volume = 0;
+    return audio.play().then(() => { fadeVolume(audio, target, fadeMs); paint(); }).catch(paint);
+  };
   btn.addEventListener("click", e => {
     e.stopPropagation();
-    if (audio.paused) { audio.muted = false; if (audio.volume === 0) audio.volume = .5, range.value = .5; play(); }
+    if (audio.paused && !bgm.ducked) { audio.muted = false; if (target === 0) target = .5, range.value = .5; bgm.play(); }
     else { audio.muted = !audio.muted; paint(); }
   });
   range.addEventListener("input", () => {
-    audio.volume = Number(range.value);
+    target = Number(range.value);
+    clearInterval(audio._fade);
+    if (!bgm.ducked) audio.volume = target;
     audio.muted = false;
-    try { localStorage.setItem("introVolume", range.value); } catch {}
-    if (audio.paused && audio.volume > 0) play(); else paint();
+    try { localStorage.setItem(key, range.value); } catch {}
+    if (audio.paused && !bgm.ducked && target > 0) bgm.play(); else paint();
   });
   ui.addEventListener("pointerdown", e => e.stopPropagation());
+
   /* 자동재생 시도 → 막히면 화면을 처음 누를 때 재생 */
-  audio.play().then(paint).catch(() => {
+  audio.volume = 0;
+  audio.play().then(() => { fadeVolume(audio, target, fadeMs); paint(); }).catch(() => {
     paint();
-    introMusic.unlock = e => {
+    bgm.unlock = e => {
       if (e.target.closest && e.target.closest(".intro-sound")) return;
-      /* START 를 누른 거라면: 음악이 진입 화면 전용이면 잠깐 울렸다 꺼지지 않게 재생하지 않음 */
-      if (e.target.closest && e.target.closest(".intro-start") && m.afterStart !== "continue") return;
-      document.removeEventListener("pointerdown", introMusic.unlock, true);
-      introMusic.unlock = null;
-      if (introMusic.audio === audio && audio.paused) play();
+      if (skipUnlock && e.target.closest && e.target.closest(skipUnlock)) return;
+      document.removeEventListener("pointerdown", bgm.unlock, true);
+      bgm.unlock = null;
+      if (audio.paused && !bgm.ducked) bgm.play();
     };
-    document.addEventListener("pointerdown", introMusic.unlock, true);
+    document.addEventListener("pointerdown", bgm.unlock, true);
   });
+
+  /* 페이드아웃으로 끄고 치우기 */
+  bgm.stop = (fade = true) => {
+    bgm.stopped = true;
+    if (bgm.unlock) { document.removeEventListener("pointerdown", bgm.unlock, true); bgm.unlock = null; }
+    ui.classList.add("leaving");
+    setTimeout(() => ui.remove(), fade ? 450 : 0);
+    if (!fade || audio.paused) { clearInterval(audio._fade); audio.pause(); return; }
+    fadeVolume(audio, 0, fadeMs, () => audio.pause());
+  };
+  /* 영상 재생 중: 서서히 끄기 / 영상이 멈추면: 다시 서서히 켜기 */
+  bgm.duck = on => {
+    if (bgm.stopped || on === bgm.ducked) return;
+    if (on) {
+      bgm.wasPlaying = !audio.paused;
+      bgm.ducked = true;
+      if (bgm.wasPlaying) fadeVolume(audio, 0, Math.min(fadeMs, 800), () => { if (bgm.ducked) audio.pause(); });
+    } else {
+      bgm.ducked = false;
+      if (bgm.wasPlaying) bgm.play();
+    }
+    paint();
+  };
   paint();
+  return bgm;
 }
 
-/* fade: 서서히 줄이며 끄기 */
+/* 진입 화면 음악 / 메인 음악 */
+const introMusic = { bgm: null, get audio() { return this.bgm && this.bgm.audio; } };
+const mainMusic = { bgm: null, get audio() { return this.bgm && this.bgm.audio; } };
+function setupIntroMusic(m) {
+  stopIntroMusic(false);
+  if (m && m.src) introMusic.bgm = createBgm(m, "introVolume",
+    /* 음악이 진입 화면 전용이면 START 를 누를 때 잠깐 울렸다 꺼지지 않게 */
+    m.afterStart === "continue" && !(SITE_DATA.mainMusic || {}).src ? null : ".intro-start");
+}
 function stopIntroMusic(fade = true) {
-  const { audio, ui } = introMusic;
-  if (introMusic.unlock) { document.removeEventListener("pointerdown", introMusic.unlock, true); introMusic.unlock = null; }
-  introMusic.audio = introMusic.ui = null;
-  if (ui) { ui.classList.add("leaving"); setTimeout(() => ui.remove(), fade ? 450 : 0); }
-  if (!audio) return;
-  if (!fade || audio.paused) { audio.pause(); return; }
-  const from = audio.volume, t0 = performance.now(), dur = 1200;
-  const step = () => {
-    const k = Math.min(1, (performance.now() - t0) / dur);
-    audio.volume = from * (1 - k);
-    if (k < 1) setTimeout(step, 30); else audio.pause();
+  if (introMusic.bgm) introMusic.bgm.stop(fade);
+  introMusic.bgm = null;
+}
+function startMainMusic(m) {
+  if (mainMusic.bgm) mainMusic.bgm.stop(false);
+  mainMusic.bgm = m && m.src ? createBgm(m, "mainVolume", null) : null;
+  updateDuck();
+}
+
+/* ---------- 영상·유튜브가 소리 내며 재생되면 배경음악 자동으로 끄기 ---------- */
+const loudMedia = new Set();
+function updateDuck() {
+  const on = loudMedia.size > 0 && (SITE_DATA.mainMusic || {}).autoMute !== false;
+  [introMusic.bgm, mainMusic.bgm].forEach(b => b && b.duck(on));
+}
+/* <video>: 소리 있는 재생만 (반복 재생 움짤 영상은 무음이라 제외) */
+const videoState = e => {
+  const v = e.target;
+  if (!(v instanceof HTMLVideoElement)) return;
+  if (!v.paused && !v.ended && !v.muted && v.volume > 0) loudMedia.add(v); else loudMedia.delete(v);
+  updateDuck();
+};
+["play", "playing", "pause", "ended", "volumechange", "emptied"].forEach(t => document.addEventListener(t, videoState, true));
+/* 유튜브: 재생 상태를 알려달라고 요청하고, 알려주는 메시지로 판단 */
+function watchYouTube(iframe) {
+  const hello = () => {
+    try {
+      iframe.contentWindow.postMessage(JSON.stringify({ event: "listening", id: 1, channel: "widget" }), "*");
+      iframe.contentWindow.postMessage(JSON.stringify({ event: "command", func: "addEventListener", args: ["onStateChange"] }), "*");
+    } catch {}
   };
-  step();
+  iframe.addEventListener("load", () => { hello(); setTimeout(hello, 800); });
+}
+window.addEventListener("message", e => {
+  if (!/(^|\.)youtube(-nocookie)?\.com$/.test((() => { try { return new URL(e.origin).hostname; } catch { return ""; } })())) return;
+  let data; try { data = typeof e.data === "string" ? JSON.parse(e.data) : e.data; } catch { return; }
+  const state = data && (data.event === "onStateChange" ? data.info : data.info && data.info.playerState);
+  if (typeof state !== "number") return;
+  const frame = [...document.querySelectorAll("iframe")].find(f => f.contentWindow === e.source);
+  if (!frame) return;
+  if (state === 1 || state === 3) loudMedia.add(frame); else loudMedia.delete(frame);   // 1 재생, 3 버퍼링
+  updateDuck();
+});
+/* 팝업을 닫아서 영상·유튜브가 사라지면 정리 */
+function forgetGoneMedia() {
+  [...loudMedia].forEach(m => { if (!m.isConnected || (m instanceof HTMLVideoElement && m.paused)) loudMedia.delete(m); });
+  updateDuck();
 }
 
 function showIntro(c, onStart) {
@@ -1298,8 +1532,9 @@ function showIntro(c, onStart) {
     document.removeEventListener("keydown", onKey);
     introKeyHandler = null;
     /* 음악: 기본은 START 와 함께 서서히 꺼짐 / '계속 재생' 이면 메인에서도 계속 (조절 버튼도 남음) */
-    if (!(c.music && c.music.afterStart === "continue")) stopIntroMusic(true);
-    else if (introMusic.audio && introMusic.audio.paused) introMusic.audio.play().catch(() => {});
+    /* 메인 음악이 따로 있거나 '서서히 끄기' 면 페이드아웃, '계속 재생' 이면 그대로 */
+    if (!(c.music && c.music.afterStart === "continue") || (SITE_DATA.mainMusic || {}).src) stopIntroMusic(true);
+    else if (introMusic.bgm && introMusic.audio.paused) introMusic.bgm.play();
     if ((c.transition || {}).enabled === false) {
       /* 트랜지션을 끈 경우: 진입 화면이 서서히 사라짐 */
       intro.classList.add("leaving");
@@ -1351,6 +1586,8 @@ function revealOnLoad() {
   const enter = () => {
     document.documentElement.classList.remove("intro-pending");
     revealOnLoad();
+    /* 메인 페이지 음악 (편집기 미리보기 안에서는 자동으로 틀지 않음) */
+    if (window.self === window.top) startMainMusic(SITE_DATA.mainMusic);
   };
   if (!wanted) return enter();
   showIntro(c, () => {

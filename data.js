@@ -407,8 +407,27 @@ window.SITE = {
       "name": "배경음악.mp3",
       "volume": 0.2,
       "position": "top-right",
-      "hint": "소리켜기",
-      "afterStart": "continue"
+      "hint": "소리켜기"
     }
-  }
+  },
+  "stickers": {
+    "images": [
+      "uploads/20261011-154218-669d13f5-9172-47d0-a510-bb92e0e86a38.png",
+      "uploads/20261011-154218-31b50aed-ab8b-43a5-bd21-689066c2a70d.png",
+      "uploads/20261011-154218-519160b4-8ef6-4eee-a87b-b7f5c43aaaa9.png",
+      "uploads/20261011-154629-Layer-3.png",
+      "uploads/20261011-154629-Layer-4.png",
+      "uploads/20261011-154629-Layer-2.png",
+      "uploads/20261011-154629-Layer-5.png"
+    ],
+    "enabled": true,
+    "size": 315,
+    "rotate": 60,
+    "seed": 83058,
+    "fromTop": true,
+    "interval": 120,
+    "sizeVary": 0.6,
+    "density": 4
+  },
+  "mainMusic": {}
 };
