@@ -418,15 +418,17 @@ window.SITE = {
       "uploads/20261011-154629-Layer-3.png",
       "uploads/20261011-154629-Layer-4.png",
       "uploads/20261011-154629-Layer-2.png",
-      "uploads/20261011-154629-Layer-5.png"
+      "uploads/20261011-154629-Layer-5.png",
+      "uploads/20261011-161333-Layer-4.png",
+      "uploads/20261011-161333-Layer-3.png"
     ],
     "enabled": true,
-    "size": 315,
+    "size": 310,
     "rotate": 60,
-    "seed": 83058,
+    "seed": 16857,
     "fromTop": true,
     "interval": 120,
-    "sizeVary": 0.6,
+    "sizeVary": 0.4,
     "density": 4
   },
   "mainMusic": {}
