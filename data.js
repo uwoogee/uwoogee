@@ -349,5 +349,17 @@ window.SITE = {
   },
   "analytics": {
     "goatcounter": "uwoogee"
+  },
+  "intro": {
+    "frequency": "always",
+    "enabled": true,
+    "logo": "uploads/20261011-140015-Untitled-1-02.png",
+    "startSize": 30,
+    "bg": "#000000",
+    "transition": {
+      "waveMs": 600,
+      "handSize": 68,
+      "text": "HELLO!"
+    }
   }
 };

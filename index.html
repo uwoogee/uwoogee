@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>UWOOGEE</title>
+<!-- 진입 화면이 뜰 수 있는 경우, 페이지 내용이 먼저 번쩍 보이지 않게 잠깐 숨김 (진입 화면을 안 쓰면 바로 풀림) -->
+<script>
+  try {
+    if (window.self === window.top && !/^#post-/.test(location.hash))
+      document.documentElement.classList.add("intro-pending");
+  } catch (e) {}
+</script>
 <!-- 링크 미리보기 (카카오톡·X·디스코드 등) -->
 <meta name="description" content="YU-IL Portfolio">
 <meta property="og:type" content="website">
@@ -323,7 +330,101 @@
     to   { opacity: 1; transform: none; }
   }
 
+  /* ---------- 진입 화면 ----------
+     로고 → START → 픽셀 움짤 → 이미지 순서. 크기·색·간격은 편집기 > 진입 화면 에서 */
+  html.intro-pending body > :not(.intro):not(.iris) { visibility: hidden; }
+  html.intro-pending, html.intro-pending body { overflow: hidden; }
+  .intro {
+    position: fixed; inset: 0; z-index: 100;
+    background: var(--intro-bg, #2e2a35);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: var(--intro-gap, 48px);
+    padding: 24px; overflow: hidden;
+  }
+  .intro[hidden] { display: none; }
+  /* 사라질 때 (Windows 애니메이션 설정과 상관없이 재생되도록 animation 사용) */
+  .intro.leaving { animation: intro-out .6s ease forwards; pointer-events: none; }
+  @keyframes intro-out { to { opacity: 0; visibility: hidden; } }
+  .intro img { display: block; height: auto; max-width: 86vw; image-rendering: pixelated; }
+  .intro-logo-wrap { position: relative; }
+  .intro-logo { width: var(--intro-logo-w, 640px); }
+  .intro-gif { width: var(--intro-gif-w, 72px); }
+  .intro-img { width: var(--intro-img-w, 440px); }
+  .intro-start {
+    position: relative;
+    border: 0; background: none; padding: 8px 18px; cursor: pointer;
+    font-family: "Press Start 2P", ui-monospace, monospace;
+    font-size: var(--intro-start-size, 22px); letter-spacing: .06em;
+    color: var(--intro-start-color, #ffffff);
+    animation: intro-blink 1.1s steps(1) infinite;
+  }
+  .intro-start img { width: var(--intro-start-w, 160px); }
+  .intro-start:hover, .intro-start:focus-visible { animation: none; outline: none; }
+  /* 마우스를 올리면 왼쪽에 ▶ */
+  .intro-start::before {
+    content: "▶"; position: absolute; right: 100%; top: 50%; transform: translateY(-50%);
+    font-size: .8em; opacity: 0;
+  }
+  .intro-start:hover::before, .intro-start:focus-visible::before { opacity: 1; }
+  @keyframes intro-blink { 50% { opacity: 0; } }
+  /* 반짝이는 별 */
+  .intro-star {
+    position: absolute; color: var(--intro-star-color, #ffffff); line-height: 1;
+    font-size: var(--intro-star-size, 34px);
+    animation: intro-twinkle 2.4s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes intro-twinkle { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .35; transform: scale(.75); } }
+
+  /* ---------- START 후 트랜지션 ----------
+     ① 검정이 바깥에서 원 모양으로 조여 들어옴 → ② 손바닥 "하이~" → ③ 가운데에서 원이 커지며 홈페이지 등장
+     가운데의 동그란 '구멍'을 키우고 줄여서 표현 (구멍 바깥은 아주 큰 그림자로 칠함) */
+  .iris {
+    position: fixed; inset: 0; z-index: 101;
+    display: grid; place-items: center;
+    overflow: hidden;
+  }
+  .iris-hole {
+    position: absolute; left: 50%; top: 50%;
+    width: 0; height: 0; border-radius: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 0 300vmax var(--iris-color, #000);
+  }
+  .iris.closing .iris-hole { animation: iris-close .8s cubic-bezier(.65, 0, .35, 1) both; }
+  .iris.opening .iris-hole { animation: iris-open .9s cubic-bezier(.65, 0, .35, 1) both; }
+  @keyframes iris-close { from { width: 160vmax; height: 160vmax; } to { width: 0; height: 0; } }
+  @keyframes iris-open  { from { width: 0; height: 0; } to { width: 160vmax; height: 160vmax; } }
+  .iris-inner {
+    position: relative; display: none;
+    flex-direction: column; align-items: center; gap: 18px;
+  }
+  .iris.waving .iris-inner { display: flex; animation: iris-pop .35s cubic-bezier(.2, 1.4, .4, 1) both; }
+  @keyframes iris-pop { from { transform: scale(.4); opacity: 0; } }
+  .iris-hand {
+    width: var(--hand-size, 96px); height: auto; display: block;
+    image-rendering: pixelated; shape-rendering: crispEdges;
+    transform-origin: 50% 92%;              /* 손목을 축으로 흔들기 */
+    animation: hand-wave 1s ease-in-out infinite;
+  }
+  @keyframes hand-wave {
+    0%, 100% { transform: rotate(0deg); }
+    20% { transform: rotate(20deg); }
+    40% { transform: rotate(-12deg); }
+    60% { transform: rotate(18deg); }
+    80% { transform: rotate(-6deg); }
+  }
+  .iris-text {
+    font-family: "Press Start 2P", ui-monospace, monospace;
+    font-size: var(--hand-text-size, 16px); color: var(--hand-text-color, #fff); letter-spacing: .06em;
+  }
+  /* 원이 다시 커지기 시작하면 손은 작아지며 사라짐 */
+  .iris.opening .iris-inner { display: flex; animation: iris-shrink .35s ease-in forwards; }
+  @keyframes iris-shrink { to { transform: scale(.3); opacity: 0; } }
+
   @media (max-width: 560px) {
+    .intro { gap: calc(var(--intro-gap, 48px) * .7); }
+    .intro-start { font-size: calc(var(--intro-start-size, 22px) * .8); }
+    .intro-star { font-size: calc(var(--intro-star-size, 34px) * .7); }
     .avatar { width: 128px; height: 128px; }
     .hero img, .hero video { max-height: 60vh; }
     .links { gap: 14px; }
@@ -348,6 +449,9 @@
 </style>
 </head>
 <body>
+
+<!-- 진입 화면 (편집기 > 진입 화면) -->
+<div class="intro" id="intro" hidden></div>
 
 <header class="hero" id="hero"></header>
 
@@ -380,7 +484,7 @@
 </div>
 
 <!-- 사이트 내용은 data.js에 들어 있습니다. 편집은 admin.html(편집기)에서 하세요. -->
-<script src="data.js?v=20261010233559"></script>
+<script src="data.js?v=20261011141411"></script>
 <script>
 const SOCIAL_ICONS = {
   instagram: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>',
@@ -790,8 +894,130 @@ document.addEventListener("keydown", e => {
 
 render(SITE_DATA);
 
+/* ---------- 진입 화면 ---------- */
+const intro = document.getElementById("intro");
+const INTRO_STARS = [[-6, -18], [96, 2], [-12, 72]];   // 로고 기준 별 위치 (%)
+
+function buildIntro(c) {
+  const px = v => v != null && !isNaN(v) ? Number(v) + "px" : null;
+  const vars = { "--intro-bg": c.bg, "--intro-gap": px(c.gap), "--intro-logo-w": px(c.logoWidth),
+    "--intro-gif-w": px(c.gifWidth), "--intro-img-w": px(c.imageWidth), "--intro-start-size": px(c.startSize),
+    "--intro-start-w": px(c.startWidth), "--intro-start-color": c.startColor,
+    "--intro-star-color": c.starColor, "--intro-star-size": px(c.starSize) };
+  Object.entries(vars).forEach(([k, v]) => v ? intro.style.setProperty(k, v) : intro.style.removeProperty(k));
+
+  const stars = c.stars === false ? "" : INTRO_STARS.map(([x, y], k) =>
+    `<span class="intro-star" style="left:${x}%;top:${y}%;animation-delay:${k * .7}s">★</span>`).join("");
+  const parts = [];
+  if (c.logo) parts.push(`<div class="intro-logo-wrap"><img class="intro-logo" src="${esc(c.logo)}" alt="">${stars}</div>`);
+  parts.push(`<button class="intro-start" type="button" aria-label="시작">${
+    c.startImage ? `<img src="${esc(c.startImage)}" alt="">` : esc(c.startText || "START")}</button>`);
+  if (c.gif) parts.push(`<img class="intro-gif" src="${esc(c.gif)}" alt="">`);
+  if (c.image) parts.push(`<img class="intro-img" src="${esc(c.image)}" alt="">`);
+  intro.innerHTML = parts.join("");
+
+  /* 글자 START 를 쓸 때만 픽셀 글꼴을 불러옴 */
+  if (!c.startImage && !document.getElementById("pixel-font")) {
+    const link = document.createElement("link");
+    link.id = "pixel-font"; link.rel = "stylesheet";
+    link.href = "https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap";
+    document.head.appendChild(link);
+  }
+}
+
+let introKeyHandler = null;
+let introPreviewKey = null;
+/* 기본 손: 흰색 픽셀아트 손바닥 (손가락 4개 + 엄지, 14×15 칸) */
+const PIXEL_HAND = [
+  "......##......",
+  "...##.##.##...",
+  "...##.##.##...",
+  "...##.##.##.##",
+  "...##.##.##.##",
+  "##.##.##.##.##",
+  "##.##.##.##.##",
+  ".#############",
+  ".#############",
+  "..############",
+  "..###########.",
+  "...##########.",
+  "...#########..",
+  "....#######...",
+  "....#######...",
+];
+const pixelHandSVG = () => {
+  const w = PIXEL_HAND[0].length, hgt = PIXEL_HAND.length;
+  const rects = PIXEL_HAND.flatMap((row, y) => [...row].map((ch, x) => ch === "#" ? `<rect x="${x}" y="${y}" width="1.02" height="1.02"/>` : "")).join("");
+  return `<svg class="iris-hand" viewBox="0 0 ${w} ${hgt}" fill="#fff" aria-hidden="true">${rects}</svg>`;
+};
+
+/* START 를 누른 뒤
+   ① 검정이 바깥에서 원 모양으로 조여 들어옴 (CLOSE_MS)
+   ② 완전히 까매지면 손바닥이 떠서 흔들림 (waveMs)
+   ③ 가운데에서 원이 커지며 홈페이지가 드러남 (OPEN_MS)
+   onClosed: 완전히 까매졌을 때 / onOpen: 다시 열리기 시작할 때 */
+const IRIS_CLOSE_MS = 800, IRIS_OPEN_MS = 900;
+function playIris(c, { onClosed, onOpen } = {}) {
+  const t = c.transition || {};
+  const layer = document.createElement("div");
+  layer.className = "iris closing";
+  if (t.color) layer.style.setProperty("--iris-color", t.color);
+  if (t.handSize) layer.style.setProperty("--hand-size", Number(t.handSize) + "px");
+  if (t.textColor) layer.style.setProperty("--hand-text-color", t.textColor);
+  const hand = t.hand ? `<img class="iris-hand" src="${esc(t.hand)}" alt="">` : pixelHandSVG();
+  layer.innerHTML = `<div class="iris-hole"></div><div class="iris-inner">${hand}${t.text ? `<div class="iris-text">${esc(t.text)}</div>` : ""}</div>`;
+  if (t.text && !document.getElementById("pixel-font")) {
+    const link = document.createElement("link");
+    link.id = "pixel-font"; link.rel = "stylesheet";
+    link.href = "https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap";
+    document.head.appendChild(link);
+  }
+  document.body.appendChild(layer);
+  const waveMs = Math.max(300, Number(t.waveMs) || 1100);
+  /* ① 조여 들어옴 → ② 손 인사 */
+  setTimeout(() => {
+    onClosed && onClosed();
+    layer.classList.remove("closing");
+    layer.classList.add("waving");
+    /* ③ 가운데에서 열림 */
+    setTimeout(() => {
+      onOpen && onOpen();
+      layer.classList.remove("waving");
+      layer.classList.add("opening");
+      setTimeout(() => layer.remove(), IRIS_OPEN_MS + 50);
+    }, waveMs);
+  }, IRIS_CLOSE_MS);
+}
+
+function showIntro(c, onStart) {
+  buildIntro(c);
+  intro.classList.remove("leaving");
+  intro.hidden = false;
+  if (introKeyHandler) document.removeEventListener("keydown", introKeyHandler);
+  const start = () => {
+    document.removeEventListener("keydown", onKey);
+    introKeyHandler = null;
+    if ((c.transition || {}).enabled === false) {
+      /* 트랜지션을 끈 경우: 진입 화면이 서서히 사라짐 */
+      intro.classList.add("leaving");
+      setTimeout(() => { intro.hidden = true; intro.classList.remove("leaving"); }, 650);
+      onStart && onStart();
+      return;
+    }
+    playIris(c, {
+      onClosed: () => { intro.hidden = true; },        // 완전히 까매지면 진입 화면 치우기
+      onOpen: () => { onStart && onStart(); }          // 원이 열리기 시작할 때 홈페이지 등장
+    });
+  };
+  const onKey = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); start(); } };
+  intro.querySelector(".intro-start").addEventListener("click", start, { once: true });
+  introKeyHandler = onKey;
+  document.addEventListener("keydown", onKey);
+  intro.querySelector(".intro-start").focus({ preventScroll: true });
+}
+
 /* 처음 접속할 때: 헤더 → 프로필 정보 → 썸네일 카드 순서로 하나씩 페이드인 */
-(function revealOnLoad() {
+function revealOnLoad() {
   const visible = el => el && getComputedStyle(el).display !== "none" && (el.childElementCount || el.textContent.trim());
   const items = ["hero", "logo", "avatar", "name", "kana", "socials", "bio"]
     .map(id => document.getElementById(id)).filter(visible)
@@ -806,6 +1032,24 @@ render(SITE_DATA);
   });
   /* 혹시 애니메이션이 실행되지 않는 환경이어도 내용이 숨겨진 채로 남지 않게 */
   setTimeout(() => items.forEach(el => el.classList.remove("reveal")), (delay + 1.5) * 1000);
+}
+
+/* 진입 화면을 보여줄지 정하고, START 를 누르면 메인 페이지 등장 */
+(function startPage() {
+  const c = SITE_DATA.intro || {};
+  let seen = false;
+  try { seen = sessionStorage.getItem("introSeen") === "1"; } catch {}
+  const wanted = c.enabled && document.documentElement.classList.contains("intro-pending")
+    && (c.frequency === "always" || !seen);
+  const enter = () => {
+    document.documentElement.classList.remove("intro-pending");
+    revealOnLoad();
+  };
+  if (!wanted) return enter();
+  showIntro(c, () => {
+    try { sessionStorage.setItem("introSeen", "1"); } catch {}
+    enter();
+  });
 })();
 
 /* ---------- 방문 통계 (GoatCounter) ----------
@@ -841,6 +1085,11 @@ let lastModalKey = null;
 window.addEventListener("message", e => {
   if (e.origin !== location.origin || !e.data) return;
   /* 편집기의 "미리보기에서 호버 보기" 버튼 */
+  /* 편집기의 "트랜지션 미리보기" 버튼 */
+  if (e.data.type === "iris-demo") {
+    playIris(e.data.intro || {}, { onClosed: () => { intro.hidden = true; } });
+    return;
+  }
   if (e.data.type === "hover-demo") {
     modal.classList.remove("open");
     document.body.classList.remove("modal-open");
@@ -854,6 +1103,14 @@ window.addEventListener("message", e => {
   }
   if (e.data.type !== "site-preview") return;
   const { site, open, scrollTop, scrollBottom } = e.data;
+  /* 편집기 '진입 화면' 메뉴에서는 진입 화면을 미리 보여줌 (START 를 누르면 닫힘, 내용을 바꾸면 다시 표시) */
+  if (e.data.intro) {
+    const key = JSON.stringify(site.intro || {});
+    if (key !== introPreviewKey) { introPreviewKey = key; showIntro(site.intro || {}, null); }
+  } else if (introPreviewKey !== null) {
+    introPreviewKey = null;
+    intro.hidden = true;
+  }
   const scroller = document.getElementById("modal-scroll");
   render(site);
   if (open == null || !site.links[open]) {
