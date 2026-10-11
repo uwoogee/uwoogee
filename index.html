@@ -391,16 +391,24 @@
   .intro {
     position: fixed; inset: 0; z-index: 100;
     background: var(--intro-bg, #2e2a35);
-    background-image: var(--intro-dots, none);
-    background-position: center;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     gap: 0;
     padding: 24px; overflow: hidden;
   }
   .intro[hidden] { display: none; }
   /* 도트 패턴이 천천히 흘러가기 (편집기 > 진입 화면 > 배경) */
-  .intro.dots-flow { animation: intro-dots-flow var(--intro-dots-speed, 6s) linear infinite; }
-  .intro.dots-flow.leaving { animation: intro-out .6s ease forwards; }
+  /* 도트 무늬는 별도 층(::before)에 → 다른 요소와 같이 페이드인 가능 */
+  .intro::before {
+    content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+    background-image: var(--intro-dots, none); background-position: center;
+  }
+  .intro.dots-flow::before { animation: intro-dots-flow var(--intro-dots-speed, 6s) linear infinite; }
+  /* 처음 들어왔을 때: 무늬 → 항목들이 위에서부터 차례로 페이드인 */
+  .intro.entering::before { animation: intro-fade-in 1s ease both; }
+  .intro.entering.dots-flow::before { animation: intro-fade-in 1s ease both, intro-dots-flow var(--intro-dots-speed, 6s) linear infinite; }
+  .intro.entering > * { animation: intro-fade-in .9s ease both; animation-delay: calc(.15s + var(--i, 0) * .15s); }
+  .intro-sound.fade-in { animation: intro-fade-in .9s ease .3s both; }
+  @keyframes intro-fade-in { from { opacity: 0; } to { opacity: 1; } }
   @keyframes intro-dots-flow { to { background-position: var(--intro-dots-to); } }
   /* 사라질 때 (Windows 애니메이션 설정과 상관없이 재생되도록 animation 사용) */
   .intro.leaving { animation: intro-out .6s ease forwards; pointer-events: none; }
@@ -597,7 +605,7 @@
 </div>
 
 <!-- 사이트 내용은 data.js에 들어 있습니다. 편집은 admin.html(편집기)에서 하세요. -->
-<script src="data.js?v=20261011200030"></script>
+<script src="data.js?v=20261011200641"></script>
 <script>
 const SOCIAL_ICONS = {
   instagram: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>',
@@ -1853,6 +1861,13 @@ function showIntro(c, onStart) {
   intro.classList.remove("leaving");
   intro.hidden = false;
   setupIntroMusic(c.music);
+  /* 실제 방문일 때만 페이드인 (편집기 미리보기에서 설정 바꿀 때마다 깜빡이지 않게) */
+  if (onStart) {
+    [...intro.children].forEach((el, i) => el.style.setProperty("--i", i));
+    intro.classList.add("entering");
+    const ui = introMusic.bgm && introMusic.bgm.ui;
+    if (ui) { ui.classList.add("fade-in"); ui.addEventListener("animationend", () => ui.classList.remove("fade-in"), { once: true }); }
+  } else intro.classList.remove("entering");
   if (introKeyHandler) document.removeEventListener("keydown", introKeyHandler);
   const start = () => {
     document.removeEventListener("keydown", onKey);
@@ -1912,6 +1927,8 @@ function revealOnLoad() {
   const enter = () => {
     document.documentElement.classList.remove("intro-pending");
     revealOnLoad();
+    /* 화면 위쪽(처음 보이는 곳)의 스티커는 스크롤을 기다리지 않고 바로 붙기 시작 */
+    setTimeout(() => { stickerState.scrolled = true; watchStickers(); }, 450);
     /* 메인 페이지 음악 (편집기 미리보기 안에서는 자동으로 틀지 않음) */
     if (window.self === window.top) startMainMusic(SITE_DATA.mainMusic);
   };
