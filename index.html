@@ -581,7 +581,7 @@
 </div>
 
 <!-- 사이트 내용은 data.js에 들어 있습니다. 편집은 admin.html(편집기)에서 하세요. -->
-<script src="data.js?v=20261011161621"></script>
+<script src="data.js?v=20261011163048"></script>
 <script>
 const SOCIAL_ICONS = {
   instagram: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>',
@@ -960,6 +960,33 @@ function applyCursor(c) {
   });
 }
 
+/* ---------- 휴대폰에서도 자동재생되는 무음 반복 영상 ----------
+   - 소리 없음·화면 안에서 재생을 '속성'으로 확실히 지정 (아이폰은 이게 없으면 자동재생을 막음)
+   - #t=0.001: 자동재생이 막혀도 첫 장면은 보이게 (아이폰 저전력 모드 등)
+   - 그래도 막히면 화면을 처음 터치하거나 스크롤할 때 재생 */
+function makeAutoplayVideo(src) {
+  const v = document.createElement("video");
+  v.muted = true; v.defaultMuted = true;
+  v.loop = true; v.autoplay = true; v.playsInline = true;
+  v.preload = "auto";
+  ["muted", "loop", "autoplay", "playsinline", "webkit-playsinline", "disablepictureinpicture", "disableremoteplayback"]
+    .forEach(a => v.setAttribute(a, ""));
+  v.src = /#t=/.test(src) ? src : src + "#t=0.001";
+  return v;
+}
+function ensureAutoplay(v) {
+  v.muted = true; v.defaultMuted = true; v.playsInline = true;
+  const p = v.play();
+  if (!p || !p.catch) return;
+  p.catch(() => {
+    const go = () => {
+      ["touchstart", "pointerdown", "scroll"].forEach(t => window.removeEventListener(t, go, true));
+      if (v.isConnected && v.paused) v.play().catch(() => {});
+    };
+    ["touchstart", "pointerdown", "scroll"].forEach(t => window.addEventListener(t, go, { capture: true, passive: true }));
+  });
+}
+
 /* ---------- render page ---------- */
 let SITE_DATA = window.SITE || { profile: {}, links: [] };
 
@@ -1005,12 +1032,16 @@ function render(site) {
 
   const hero = document.getElementById("hero");
   const isVideo = /\.(mp4|webm|mov|m4v)(\?|$)/i.test(p.header || "");
-  const heroSrc = hero.firstElementChild?.getAttribute("src");
+  const heroSrc = hero.firstElementChild?.dataset.src;
   if (!p.header) hero.innerHTML = "";
-  else if (heroSrc !== p.header)   /* 같은 파일이면 다시 그리지 않음 (미리보기 깜빡임 방지) */
-    hero.innerHTML = isVideo
-      ? `<video src="${esc(p.header)}" autoplay loop muted playsinline disablepictureinpicture></video>`
-      : `<img src="${esc(p.header)}" alt="" draggable="false">`;
+  else if (heroSrc !== p.header) {   /* 같은 파일이면 다시 그리지 않음 (미리보기 깜빡임 방지) */
+    hero.innerHTML = "";
+    const el = isVideo ? makeAutoplayVideo(p.header) : document.createElement("img");
+    if (!isVideo) { el.src = p.header; el.alt = ""; el.draggable = false; }
+    el.dataset.src = p.header;
+    hero.appendChild(el);
+    if (isVideo) ensureAutoplay(el);
+  }
   document.getElementById("logo").textContent = p.logo || "";
   /* 프로필 사진이 없으면 동그라미 자체를 숨김 */
   const avatar = document.getElementById("avatar");
@@ -1100,6 +1131,7 @@ function openModal(i, trigger) {
   post.innerHTML = "";
   (l.post || []).forEach((b, j) => post.appendChild(renderBlock(b, i, j + 1)));
   post.querySelectorAll("iframe.embed").forEach(watchYouTube);   // 유튜브 재생 중엔 배경음악 끄기
+  post.querySelectorAll("video[autoplay]").forEach(ensureAutoplay); // 반복 재생 영상: 휴대폰에서도 자동재생
 
   modal.classList.add("open");
   document.body.classList.add("modal-open");
@@ -1423,9 +1455,14 @@ function createBgm(m, key, skipUnlock) {
   });
   ui.addEventListener("pointerdown", e => e.stopPropagation());
 
-  /* 자동재생 시도 → 막히면 화면을 처음 누를 때 재생 */
+  /* 휴대폰·태블릿(터치 기기): 음소거 상태로 시작 → 🔇 버튼을 직접 눌러야 켜짐 */
+  const touchOnly = matchMedia("(hover: none) and (pointer: coarse)").matches;
+  const startMuted = touchOnly && SITE_DATA.musicMobile !== "auto";
+  /* PC: 자동재생 시도 → 막히면 화면을 처음 누를 때 재생 */
   audio.volume = 0;
-  audio.play().then(() => { fadeVolume(audio, target, fadeMs); paint(); }).catch(() => {
+  (startMuted ? Promise.reject() : audio.play()).then(() => { fadeVolume(audio, target, fadeMs); paint(); }).catch(() => {
+    paint();
+    if (startMuted) return;
     paint();
     bgm.unlock = e => {
       if (e.target.closest && e.target.closest(".intro-sound")) return;

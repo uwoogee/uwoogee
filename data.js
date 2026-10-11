@@ -357,10 +357,10 @@ window.SITE = {
       }
     },
     "clickFx": {
-      "enabled": true,
       "c3": "#4d4d4d",
       "c2": "#b8b8b8",
-      "shape": "sparkle"
+      "shape": "sparkle",
+      "enabled": true
     }
   },
   "analytics": {
@@ -407,8 +407,10 @@ window.SITE = {
       "name": "배경음악.mp3",
       "volume": 0.2,
       "position": "top-right",
-      "hint": "소리켜기"
-    }
+      "hint": "소리켜기",
+      "fade": 2
+    },
+    "starSize": 58
   },
   "stickers": {
     "images": [
@@ -431,5 +433,11 @@ window.SITE = {
     "sizeVary": 0.4,
     "density": 4
   },
-  "mainMusic": {}
+  "mainMusic": {
+    "src": "uploads/20261011-162514-file.mp3",
+    "name": "뉴진.mp3",
+    "position": "top-right",
+    "fade": 1,
+    "volume": 0.35
+  }
 };
