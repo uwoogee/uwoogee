@@ -376,7 +376,7 @@ window.SITE = {
       "handSize": 68,
       "text": "HELLO!"
     },
-    "startHoverColor": "#ffe042",
+    "startHoverColor": "#ffffff",
     "items": [
       {
         "type": "image",
@@ -410,7 +410,8 @@ window.SITE = {
       "hint": "소리켜기",
       "fade": 2
     },
-    "starSize": 58
+    "starSize": 58,
+    "startColor": "#9e9e9e"
   },
   "stickers": {
     "images": [

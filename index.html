@@ -380,7 +380,8 @@
 
   /* ---------- 진입 화면 ----------
      로고 → START → 픽셀 움짤 → 이미지 순서. 크기·색·간격은 편집기 > 진입 화면 에서 */
-  html.intro-pending body > :not(.intro):not(.iris):not(.tc-dot):not(.tc-ring):not(.intro-sound) { visibility: hidden; }
+  /* 진입 화면 동안 숨길 것은 페이지 내용(헤더·본문·스티커)만. 커서·클릭 효과·음악 버튼 등은 그대로 보임 */
+  html.intro-pending :is(body > .hero, body > .wrap, body > .stickers) { visibility: hidden; }
   html.intro-pending, html.intro-pending body { overflow: hidden; }
   .intro {
     position: fixed; inset: 0; z-index: 100;
@@ -581,7 +582,7 @@
 </div>
 
 <!-- 사이트 내용은 data.js에 들어 있습니다. 편집은 admin.html(편집기)에서 하세요. -->
-<script src="data.js?v=20261011163048"></script>
+<script src="data.js?v=20261011192904"></script>
 <script>
 const SOCIAL_ICONS = {
   instagram: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>',
