@@ -330,15 +330,42 @@
     to   { opacity: 1; transform: none; }
   }
 
+  /* ---------- 따라오는 커서 (편집기 > 커서 > 따라오는 커서) ---------- */
+  html.trail-on, html.trail-on * { cursor: none !important; }
+  .tc-dot, .tc-ring {
+    position: fixed; left: 0; top: 0; z-index: 2147483000;
+    pointer-events: none; opacity: 0;
+    border-radius: var(--tc-radius, 0px);
+    mix-blend-mode: var(--tc-blend, difference);   /* 밝은 곳에서도 보이도록 색 반전 */
+    will-change: transform;
+  }
+  html.tc-visible .tc-dot, html.tc-visible .tc-ring { opacity: 1; }
+  .tc-dot {
+    width: var(--tc-dot, 5px); height: var(--tc-dot, 5px);
+    background: var(--tc-color, #fff);
+  }
+  .tc-ring {
+    width: var(--tc-ring, 26px); height: var(--tc-ring, 26px);
+    border: var(--tc-border, 1.5px) solid color-mix(in srgb, var(--tc-color, #fff) 60%, transparent);
+    transition: width .18s, height .18s, background-color .18s, border-color .18s, scale .15s;
+  }
+  /* 카드·링크·버튼 위: 테두리가 커지고 살짝 채워짐 */
+  .tc-ring.hover {
+    width: var(--tc-ring-hover, 46px); height: var(--tc-ring-hover, 46px);
+    background: color-mix(in srgb, var(--tc-color, #fff) 12%, transparent);
+    border-color: var(--tc-color, #fff);
+  }
+  .tc-ring.down { scale: .82; }
+
   /* ---------- 진입 화면 ----------
      로고 → START → 픽셀 움짤 → 이미지 순서. 크기·색·간격은 편집기 > 진입 화면 에서 */
-  html.intro-pending body > :not(.intro):not(.iris) { visibility: hidden; }
+  html.intro-pending body > :not(.intro):not(.iris):not(.tc-dot):not(.tc-ring):not(.intro-sound) { visibility: hidden; }
   html.intro-pending, html.intro-pending body { overflow: hidden; }
   .intro {
     position: fixed; inset: 0; z-index: 100;
     background: var(--intro-bg, #2e2a35);
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: var(--intro-gap, 48px);
+    gap: 0;
     padding: 24px; overflow: hidden;
   }
   .intro[hidden] { display: none; }
@@ -347,6 +374,38 @@
   @keyframes intro-out { to { opacity: 0; visibility: hidden; } }
   .intro img { display: block; height: auto; max-width: 86vw; image-rendering: pixelated; }
   .intro-logo-wrap { position: relative; }
+  /* 진입 화면 텍스트 (글꼴·크기·자간·줄 간격·색은 항목마다) */
+  .intro-text {
+    max-width: 90vw; text-align: center; white-space: pre-line;
+    font-size: var(--fs, 20px); color: #ffffff;
+  }
+
+  /* 진입 화면 배경음악 조절 (음소거 버튼 + 볼륨) */
+  .intro-sound {
+    position: fixed; z-index: 102; right: 20px; bottom: 20px;
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 12px; border-radius: 999px;
+    background: rgba(255, 255, 255, .08); border: 1px solid rgba(255, 255, 255, .14);
+    color: var(--snd-color, #ffffff);
+    transition: opacity .4s;
+  }
+  .intro-sound.top { top: 20px; bottom: auto; }
+  .intro-sound.left { left: 20px; right: auto; }
+  .intro-sound.leaving { opacity: 0; pointer-events: none; }
+  .intro-sound button {
+    border: 0; background: none; color: inherit; cursor: pointer;
+    width: 26px; height: 26px; padding: 0; display: grid; place-items: center;
+  }
+  .intro-sound svg { width: 22px; height: 22px; }
+  .intro-sound input[type=range] { width: 90px; accent-color: var(--snd-color, #ffffff); cursor: pointer; }
+  .intro-sound .snd-hint { font-size: 12px; opacity: .8; white-space: nowrap; }
+  @media (max-width: 560px) {
+    .intro-sound { right: 12px; bottom: 12px; }
+    .intro-sound.left { left: 12px; }
+    .intro-sound.top { top: 12px; }
+    .intro-sound input[type=range] { width: 70px; }
+    .intro-text { font-size: calc(var(--fs, 20px) * .8); }
+  }
   .intro-logo { width: var(--intro-logo-w, 640px); }
   .intro-gif { width: var(--intro-gif-w, 72px); }
   .intro-img { width: var(--intro-img-w, 440px); }
@@ -356,16 +415,26 @@
     font-family: "Press Start 2P", ui-monospace, monospace;
     font-size: var(--intro-start-size, 22px); letter-spacing: .06em;
     color: var(--intro-start-color, #ffffff);
-    animation: intro-blink 1.1s steps(1) infinite;
   }
   .intro-start img { width: var(--intro-start-w, 160px); }
-  .intro-start:hover, .intro-start:focus-visible { animation: none; outline: none; }
+  /* 항목 사이 여백: 구간마다 따로 (편집기 > 진입 화면 > 여백) */
+  .intro > .intro-start { margin-top: var(--intro-gap-start, var(--intro-gap, 48px)); }
+  .intro > .intro-gif   { margin-top: var(--intro-gap-gif,   var(--intro-gap, 48px)); }
+  .intro > .intro-img   { margin-top: var(--intro-gap-img,   var(--intro-gap, 48px)); }
+  .intro > .intro-item  { margin-top: var(--g, 48px); }   /* 순서 목록 형식: 항목마다 '위 여백' */
+  .intro > :first-child { margin-top: 0; }
+  /* START 에 마우스를 올리면: 깜빡임 멈춤 + 색 바뀜 (▶ 도 같은 색) */
+  .intro-start { transition: color .15s; }
+  .intro-start:hover, .intro-start:focus-visible {
+    animation: none; outline: none;
+    color: var(--intro-start-hover, #ec8fb0);
+  }
   /* 마우스를 올리면 왼쪽에 ▶ */
   .intro-start::before {
     content: "▶"; position: absolute; right: 100%; top: 50%; transform: translateY(-50%);
-    font-size: .8em; opacity: 0;
+    font-size: .8em;
+    animation: intro-blink .8s steps(1) infinite;   /* START 는 그대로, ▶ 화살표만 항상 깜빡임 */
   }
-  .intro-start:hover::before, .intro-start:focus-visible::before { opacity: 1; }
   @keyframes intro-blink { 50% { opacity: 0; } }
   /* 반짝이는 별 */
   .intro-star {
@@ -422,7 +491,11 @@
   @keyframes iris-shrink { to { transform: scale(.3); opacity: 0; } }
 
   @media (max-width: 560px) {
-    .intro { gap: calc(var(--intro-gap, 48px) * .7); }
+    .intro > .intro-start { margin-top: calc(var(--intro-gap-start, var(--intro-gap, 48px)) * .7); }
+    .intro > .intro-gif   { margin-top: calc(var(--intro-gap-gif,   var(--intro-gap, 48px)) * .7); }
+    .intro > .intro-img   { margin-top: calc(var(--intro-gap-img,   var(--intro-gap, 48px)) * .7); }
+    .intro > .intro-item  { margin-top: calc(var(--g, 48px) * .7); }
+    .intro > :first-child { margin-top: 0; }
     .intro-start { font-size: calc(var(--intro-start-size, 22px) * .8); }
     .intro-star { font-size: calc(var(--intro-star-size, 34px) * .7); }
     .avatar { width: 128px; height: 128px; }
@@ -444,7 +517,7 @@
   /* 윈도우 '애니메이션 효과'가 꺼진 환경에서는 다른 움직임은 줄이되,
      썸네일 카드 호버 슬라이드는 디자인의 일부라 그대로 재생 */
   @media (prefers-reduced-motion: reduce) {
-    *:not(.card-fill):not(.card-base) { transition: none !important; }
+    *:not(.card-fill):not(.card-base):not(.tc-ring) { transition: none !important; }
   }
 </style>
 </head>
@@ -484,7 +557,7 @@
 </div>
 
 <!-- 사이트 내용은 data.js에 들어 있습니다. 편집은 admin.html(편집기)에서 하세요. -->
-<script src="data.js?v=20261011141411"></script>
+<script src="data.js?v=20261011151743"></script>
 <script>
 const SOCIAL_ICONS = {
   instagram: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>',
@@ -591,6 +664,118 @@ function renderBlock(raw, i, j) {
   return f;
 }
 
+/* ---------- 클릭하면 픽셀 별이 팡! (편집기 > 커서 > 클릭 효과) ---------- */
+const PIXEL_STARS = [
+  ["..#..", ".###.", "#####", ".###.", ".#.#."],      // 별
+  ["..#..", "..#..", "##.##", "..#..", "..#.."],      // 반짝이
+  [".#.", "###", ".#."],                               // 작은 십자
+];
+const pixelStarSVG = (shape, color) => {
+  const w = shape[0].length, hgt = shape.length;
+  const rects = shape.flatMap((row, y) => [...row].map((ch, x) => ch === "#" ? `<rect x="${x}" y="${y}" width="1.02" height="1.02"/>` : "")).join("");
+  return `<svg viewBox="0 0 ${w} ${hgt}" fill="${color}" shape-rendering="crispEdges" style="width:100%;height:100%;display:block">${rects}</svg>`;
+};
+const clickFx = { cfg: null, live: 0 };
+document.addEventListener("pointerdown", e => {
+  const c = clickFx.cfg;
+  if (!c || !c.enabled || e.button > 0 || clickFx.live > 120) return;   // 너무 많이 쌓이지 않게
+  const okColor = v => /^#[0-9a-f]{3,8}$/i.test(v || "");
+  const colors = [c.c1 ?? "#ffffff", c.c2 ?? "#ec8fb0", c.c3 ?? "#ffe066"].filter(okColor);
+  const count = Math.max(1, Math.min(30, Number(c.count) || 8));
+  const size = Math.max(4, Math.min(60, Number(c.size) || 12));
+  const dist = Math.max(10, Math.min(300, Number(c.distance) || 60));
+  const shapes = c.shape === "star" ? [PIXEL_STARS[0]] : c.shape === "sparkle" ? [PIXEL_STARS[1], PIXEL_STARS[2]] : PIXEL_STARS;
+  for (let k = 0; k < count; k++) {
+    const el = document.createElement("div");
+    const s = size * (.6 + Math.random() * .7);
+    Object.assign(el.style, {
+      position: "fixed", left: e.clientX - s / 2 + "px", top: e.clientY - s / 2 + "px",
+      width: s + "px", height: s + "px", pointerEvents: "none", zIndex: 2147482999
+    });
+    /* 바깥(el)은 이동만, 안쪽(inner)은 크기·회전·투명도만 → 두 움직임이 동시에 자연스럽게 흘러감 */
+    el.innerHTML = `<div style="width:100%;height:100%">${pixelStarSVG(shapes[k % shapes.length], colors[k % colors.length] || "#fff")}</div>`;
+    const inner = el.firstElementChild;
+    document.body.appendChild(el);
+    clickFx.live++;
+    /* 고르게 퍼지되 살짝 랜덤하게 */
+    const ang = (k / count) * Math.PI * 2 + (Math.random() - .5) * .6;
+    const d = dist * (.6 + Math.random() * .6);
+    const dx = Math.cos(ang) * d, dy = Math.sin(ang) * d;
+    /* 속도: 1 = 보통, 2 = 두 배 빠르게, 0.5 = 두 배 느리게 */
+    const speed = Math.max(.3, Math.min(3, Number(c.speed) || 1));
+    const dur = (720 + Math.random() * 200) / speed;
+    /* 이동: 처음엔 빠르게 튀어나가고 점점 느려지되 멈추지 않음 (+ 살짝 아래로 떨어짐) */
+    const move = el.animate([
+      { transform: "translate(0,0)" },
+      { transform: `translate(${dx}px,${dy + dist * .25}px)` }
+    ], { duration: dur, easing: "cubic-bezier(.25,.5,.45,.95)" });
+    /* 모양: 톡 커졌다가 날아가는 내내 서서히 작아지고 옅어짐 */
+    const spin = (Math.random() - .5) * 160;
+    inner.animate([
+      { transform: "scale(.4) rotate(0deg)", opacity: 1 },
+      { transform: `scale(1.1) rotate(${spin * .25}deg)`, opacity: 1, offset: .15 },
+      { transform: `scale(.25) rotate(${spin}deg)`, opacity: 0 }
+    ], { duration: dur, easing: "linear" });
+    const done = () => { el.remove(); clickFx.live--; };
+    move.onfinish = done;
+    setTimeout(() => { if (el.isConnected) done(); }, dur + 600);   // 혹시 애니메이션이 멈춰도 치우기
+  }
+}, { passive: true, capture: true });
+
+/* ---------- 따라오는 커서 ----------
+   작은 점은 마우스를 바로 따라오고, 테두리는 살짝 늦게 미끄러지듯 따라옴.
+   카드·링크·버튼 위에서는 테두리가 커짐. 마우스가 있는 기기(PC)에서만 켜짐 */
+const trail = { on: false, dot: null, ring: null, x: -100, y: -100, rx: -100, ry: -100, ease: .15, raf: 0, bound: false };
+const TRAIL_HOVER = "a, button, summary, label, input, textarea, .card-link, .modal-close, [role=button]";
+function trailCursor(t) {
+  const usable = t && matchMedia("(hover: hover) and (pointer: fine)").matches;
+  document.documentElement.classList.toggle("trail-on", !!usable);
+  if (!usable) {
+    trail.on = false;
+    trail.dot && trail.dot.remove(); trail.ring && trail.ring.remove();
+    trail.dot = trail.ring = null;
+    cancelAnimationFrame(trail.raf);
+    return;
+  }
+  if (!trail.dot) {
+    trail.dot = document.createElement("div"); trail.dot.className = "tc-dot";
+    trail.ring = document.createElement("div"); trail.ring.className = "tc-ring";
+    document.body.append(trail.ring, trail.dot);
+  }
+  const root = document.documentElement.style;
+  const px = (k, v) => v != null && !isNaN(v) ? root.setProperty(k, Number(v) + "px") : root.removeProperty(k);
+  root.setProperty("--tc-color", /^#[0-9a-f]{3,8}$/i.test(t.color || "") ? t.color : "#ffffff");
+  root.setProperty("--tc-radius", t.shape === "circle" ? "50%" : "0px");
+  root.setProperty("--tc-blend", t.blend === false ? "normal" : "difference");
+  px("--tc-dot", t.dot); px("--tc-ring", t.ring); px("--tc-ring-hover", t.ringHover); px("--tc-border", t.border);
+  trail.ease = Math.max(.04, Math.min(1, Number(t.ease) || .15));
+  trail.on = true;
+  if (!trail.bound) {
+    trail.bound = true;
+    document.addEventListener("mousemove", e => {
+      if (!trail.on) return;
+      trail.x = e.clientX; trail.y = e.clientY;
+      if (trail.rx < -50) { trail.rx = trail.x; trail.ry = trail.y; }   // 처음엔 바로 그 자리에서 시작
+      trail.dot.style.transform = `translate3d(${trail.x}px, ${trail.y}px, 0) translate(-50%, -50%)`;
+      document.documentElement.classList.add("tc-visible");
+      if (!trail.raf) trail.raf = requestAnimationFrame(trailLoop);
+    }, { passive: true });
+    document.addEventListener("mouseover", e => {
+      if (trail.on) trail.ring.classList.toggle("hover", !!e.target.closest(TRAIL_HOVER));
+    }, { passive: true });
+    document.addEventListener("mousedown", () => trail.on && trail.ring.classList.add("down"));
+    document.addEventListener("mouseup", () => trail.on && trail.ring.classList.remove("down"));
+    document.documentElement.addEventListener("mouseleave", () => document.documentElement.classList.remove("tc-visible"));
+  }
+}
+function trailLoop() {
+  trail.rx += (trail.x - trail.rx) * trail.ease;
+  trail.ry += (trail.y - trail.ry) * trail.ease;
+  if (trail.ring) trail.ring.style.transform = `translate3d(${trail.rx}px, ${trail.ry}px, 0) translate(-50%, -50%)`;
+  const still = Math.abs(trail.x - trail.rx) < .1 && Math.abs(trail.y - trail.ry) < .1;
+  trail.raf = trail.on && !still ? requestAnimationFrame(trailLoop) : 0;
+}
+
 /* ---------- 마우스 커서 (편집기 > 커서) ----------
    올린 이미지를 지정한 크기로 줄여서 커서로 사용. 휴대폰·태블릿에는 커서가 없어서 영향 없음 */
 let cursorKey = null;
@@ -599,7 +784,10 @@ function applyCursor(c) {
   if (key === cursorKey) return;            // 바뀐 게 없으면 다시 만들지 않음
   cursorKey = key;
   let el = document.getElementById("cursor-style");
-  if (!c || !c.normal) { if (el) el.textContent = ""; return; }
+  /* 종류: none(기본 마우스) / image(내 이미지) / trail(따라오는 커서) */
+  const mode = c ? (c.mode || (c.normal ? "image" : "none")) : "none";
+  trailCursor(mode === "trail" ? (c.trail || {}) : null);
+  if (mode !== "image" || !c.normal) { if (el) el.textContent = ""; return; }
   const size = Math.max(16, Math.min(128, Number(c.size) || 32));
   const hot = c.hotspot === "center" ? [size / 2, size / 2] : [0, 0];
   /* 이미지를 커서 크기로 줄인 PNG 로 만들기 */
@@ -668,6 +856,7 @@ function render(site) {
   pop.framePad != null ? rootStyle.setProperty("--pop-frame-pad", Number(pop.framePad) + "px") : rootStyle.removeProperty("--pop-frame-pad");
 
   applyCursor((site.theme || {}).cursor);
+  clickFx.cfg = (site.theme || {}).clickFx || null;
 
   const hero = document.getElementById("hero");
   const isVideo = /\.(mp4|webm|mov|m4v)(\?|$)/i.test(p.header || "");
@@ -901,23 +1090,55 @@ const INTRO_STARS = [[-6, -18], [96, 2], [-12, 72]];   // 로고 기준 별 위�
 function buildIntro(c) {
   const px = v => v != null && !isNaN(v) ? Number(v) + "px" : null;
   const vars = { "--intro-bg": c.bg, "--intro-gap": px(c.gap), "--intro-logo-w": px(c.logoWidth),
+    "--intro-gap-start": px(c.gapStart), "--intro-gap-gif": px(c.gapGif), "--intro-gap-img": px(c.gapImg),
+    "--intro-start-hover": c.startHoverColor,
     "--intro-gif-w": px(c.gifWidth), "--intro-img-w": px(c.imageWidth), "--intro-start-size": px(c.startSize),
     "--intro-start-w": px(c.startWidth), "--intro-start-color": c.startColor,
     "--intro-star-color": c.starColor, "--intro-star-size": px(c.starSize) };
   Object.entries(vars).forEach(([k, v]) => v ? intro.style.setProperty(k, v) : intro.style.removeProperty(k));
 
-  const stars = c.stars === false ? "" : INTRO_STARS.map(([x, y], k) =>
+  const starsHTML = INTRO_STARS.map(([x, y], k) =>
     `<span class="intro-star" style="left:${x}%;top:${y}%;animation-delay:${k * .7}s">★</span>`).join("");
+  const startHTML = (gap, item = true) => `<button class="intro-start${item ? " intro-item" : ""}" type="button" aria-label="시작"${gap}>${
+    c.startImage ? `<img src="${esc(c.startImage)}" alt="">` : esc(c.startText || "START")}</button>`;
+  const gapAttr = it => it.gap != null && !isNaN(it.gap) ? ` style="--g:${Number(it.gap)}px"` : "";
   const parts = [];
-  if (c.logo) parts.push(`<div class="intro-logo-wrap"><img class="intro-logo" src="${esc(c.logo)}" alt="">${stars}</div>`);
-  parts.push(`<button class="intro-start" type="button" aria-label="시작">${
-    c.startImage ? `<img src="${esc(c.startImage)}" alt="">` : esc(c.startText || "START")}</button>`);
-  if (c.gif) parts.push(`<img class="intro-gif" src="${esc(c.gif)}" alt="">`);
-  if (c.image) parts.push(`<img class="intro-img" src="${esc(c.image)}" alt="">`);
+  if (Array.isArray(c.items)) {
+    /* 편집기에서 정한 순서대로: 이미지 여러 장 + START 하나 */
+    c.items.forEach(it => {
+      if (it.type === "start") return parts.push(startHTML(gapAttr(it)));
+      if (it.type === "text") {
+        if (!(it.text || "").trim()) return;
+        const num = (v, d) => v != null && !isNaN(v) ? Number(v) : d;
+        const pixel = it.font === "pixel";
+        const css = [
+          it.gap != null && !isNaN(it.gap) ? `--g:${Number(it.gap)}px` : "",
+          `--fs:${num(it.size, pixel ? 16 : 20)}px`,
+          `font-family:${pixel ? `'Press Start 2P', ui-monospace, monospace` : "var(--font)"}`,
+          `font-weight:${pixel ? 400 : num(it.weight, 500)}`,
+          `letter-spacing:${num(it.spacing, pixel ? .04 : 0)}em`,
+          `line-height:${num(it.lineHeight, pixel ? 1.8 : 1.5)}`,
+          /^#[0-9a-f]{3,8}$/i.test(it.color || "") ? `color:${it.color}` : ""
+        ].filter(Boolean).join(";");
+        return parts.push(`<div class="intro-text intro-item" style="${css}">${esc(it.text)}</div>`);
+      }
+      if (!it.src) return;
+      const w = it.width != null && !isNaN(it.width) ? ` style="width:${Number(it.width)}px"` : "";
+      parts.push(`<div class="intro-logo-wrap intro-item"${gapAttr(it)}><img src="${esc(it.src)}" alt=""${w}>${it.stars ? starsHTML : ""}</div>`);
+    });
+    if (!c.items.some(it => it.type === "start")) parts.push(startHTML(""));   // START 는 항상 있어야 들어갈 수 있음
+  } else {
+    /* 예전 형식 (로고·START·움짤·이미지 고정 칸) */
+    if (c.logo) parts.push(`<div class="intro-logo-wrap"><img class="intro-logo" src="${esc(c.logo)}" alt="">${c.stars === false ? "" : starsHTML}</div>`);
+    parts.push(startHTML("", false));
+    if (c.gif) parts.push(`<img class="intro-gif" src="${esc(c.gif)}" alt="">`);
+    if (c.image) parts.push(`<img class="intro-img" src="${esc(c.image)}" alt="">`);
+  }
   intro.innerHTML = parts.join("");
 
-  /* 글자 START 를 쓸 때만 픽셀 글꼴을 불러옴 */
-  if (!c.startImage && !document.getElementById("pixel-font")) {
+  /* 글자 START 나 픽셀 글꼴 텍스트를 쓸 때만 픽셀 글꼴을 불러옴 */
+  const needPixel = !c.startImage || (c.items || []).some(it => it.type === "text" && it.font === "pixel");
+  if (needPixel && !document.getElementById("pixel-font")) {
     const link = document.createElement("link");
     link.id = "pixel-font"; link.rel = "stylesheet";
     link.href = "https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap";
@@ -989,14 +1210,96 @@ function playIris(c, { onClosed, onOpen } = {}) {
   }, IRIS_CLOSE_MS);
 }
 
+/* ---------- 진입 화면 배경음악 ----------
+   브라우저 정책상 소리 있는 자동재생은 막힐 수 있음 → 막히면 화면을 처음 클릭/터치할 때 재생 시작.
+   음소거 버튼 + 볼륨 막대는 진입 화면에서만 (설정에 따라 메인에서도 계속 재생 가능) */
+const SPEAKER_ON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4V5z" fill="currentColor"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>`;
+const SPEAKER_OFF = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4V5z" fill="currentColor"/><path d="m16 9 5 6M21 9l-5 6"/></svg>`;
+const introMusic = { audio: null, ui: null, unlock: null };
+
+function setupIntroMusic(m) {
+  stopIntroMusic(false);
+  if (!m || !m.src) return;
+  let vol = Number(m.volume ?? .5);
+  try { const saved = localStorage.getItem("introVolume"); if (saved !== null) vol = Number(saved); } catch {}
+  const audio = new Audio(m.src);
+  audio.loop = m.loop !== false;
+  audio.volume = Math.max(0, Math.min(1, vol));
+  introMusic.audio = audio;
+
+  const ui = document.createElement("div");
+  ui.className = "intro-sound" + (String(m.position || "").includes("top") ? " top" : "") + (String(m.position || "").includes("left") ? " left" : "");
+  if (/^#[0-9a-f]{3,8}$/i.test(m.color || "")) ui.style.setProperty("--snd-color", m.color);
+  ui.innerHTML = `<button type="button" class="snd-btn" aria-label="소리 켜기/끄기"></button>
+    <input type="range" min="0" max="1" step="0.01" aria-label="볼륨" value="${audio.volume}">
+    <span class="snd-hint"></span>`;
+  document.body.appendChild(ui);
+  introMusic.ui = ui;
+  const btn = ui.querySelector(".snd-btn"), range = ui.querySelector("input"), hint = ui.querySelector(".snd-hint");
+  const paint = () => {
+    const silent = audio.paused || audio.muted || audio.volume === 0;
+    btn.innerHTML = silent ? SPEAKER_OFF : SPEAKER_ON;
+    hint.textContent = audio.paused ? (m.hint ?? "소리 켜기") : "";
+    hint.style.display = audio.paused && hint.textContent ? "" : "none";
+  };
+  const play = () => audio.play().then(paint).catch(paint);
+  btn.addEventListener("click", e => {
+    e.stopPropagation();
+    if (audio.paused) { audio.muted = false; if (audio.volume === 0) audio.volume = .5, range.value = .5; play(); }
+    else { audio.muted = !audio.muted; paint(); }
+  });
+  range.addEventListener("input", () => {
+    audio.volume = Number(range.value);
+    audio.muted = false;
+    try { localStorage.setItem("introVolume", range.value); } catch {}
+    if (audio.paused && audio.volume > 0) play(); else paint();
+  });
+  ui.addEventListener("pointerdown", e => e.stopPropagation());
+  /* 자동재생 시도 → 막히면 화면을 처음 누를 때 재생 */
+  audio.play().then(paint).catch(() => {
+    paint();
+    introMusic.unlock = e => {
+      if (e.target.closest && e.target.closest(".intro-sound")) return;
+      /* START 를 누른 거라면: 음악이 진입 화면 전용이면 잠깐 울렸다 꺼지지 않게 재생하지 않음 */
+      if (e.target.closest && e.target.closest(".intro-start") && m.afterStart !== "continue") return;
+      document.removeEventListener("pointerdown", introMusic.unlock, true);
+      introMusic.unlock = null;
+      if (introMusic.audio === audio && audio.paused) play();
+    };
+    document.addEventListener("pointerdown", introMusic.unlock, true);
+  });
+  paint();
+}
+
+/* fade: 서서히 줄이며 끄기 */
+function stopIntroMusic(fade = true) {
+  const { audio, ui } = introMusic;
+  if (introMusic.unlock) { document.removeEventListener("pointerdown", introMusic.unlock, true); introMusic.unlock = null; }
+  introMusic.audio = introMusic.ui = null;
+  if (ui) { ui.classList.add("leaving"); setTimeout(() => ui.remove(), fade ? 450 : 0); }
+  if (!audio) return;
+  if (!fade || audio.paused) { audio.pause(); return; }
+  const from = audio.volume, t0 = performance.now(), dur = 1200;
+  const step = () => {
+    const k = Math.min(1, (performance.now() - t0) / dur);
+    audio.volume = from * (1 - k);
+    if (k < 1) setTimeout(step, 30); else audio.pause();
+  };
+  step();
+}
+
 function showIntro(c, onStart) {
   buildIntro(c);
   intro.classList.remove("leaving");
   intro.hidden = false;
+  setupIntroMusic(c.music);
   if (introKeyHandler) document.removeEventListener("keydown", introKeyHandler);
   const start = () => {
     document.removeEventListener("keydown", onKey);
     introKeyHandler = null;
+    /* 음악: 기본은 START 와 함께 서서히 꺼짐 / '계속 재생' 이면 메인에서도 계속 (조절 버튼도 남음) */
+    if (!(c.music && c.music.afterStart === "continue")) stopIntroMusic(true);
+    else if (introMusic.audio && introMusic.audio.paused) introMusic.audio.play().catch(() => {});
     if ((c.transition || {}).enabled === false) {
       /* 트랜지션을 끈 경우: 진입 화면이 서서히 사라짐 */
       intro.classList.add("leaving");
@@ -1009,11 +1312,15 @@ function showIntro(c, onStart) {
       onOpen: () => { onStart && onStart(); }          // 원이 열리기 시작할 때 홈페이지 등장
     });
   };
-  const onKey = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); start(); } };
+  const onKey = e => {
+    if (e.target.closest && e.target.closest(".intro-sound")) return;   // 볼륨 조절 중에는 무시
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); start(); }
+  };
   intro.querySelector(".intro-start").addEventListener("click", start, { once: true });
   introKeyHandler = onKey;
   document.addEventListener("keydown", onKey);
-  intro.querySelector(".intro-start").focus({ preventScroll: true });
+  /* 자동 포커스는 하지 않음 (F5 등 키보드를 쓴 직후 호버 색이 저절로 켜지는 문제). Enter·스페이스는 위 onKey 로 동작 */
+  if (document.activeElement && document.activeElement !== document.body) document.activeElement.blur();
 }
 
 /* 처음 접속할 때: 헤더 → 프로필 정보 → 썸네일 카드 순서로 하나씩 페이드인 */
@@ -1110,6 +1417,7 @@ window.addEventListener("message", e => {
   } else if (introPreviewKey !== null) {
     introPreviewKey = null;
     intro.hidden = true;
+    stopIntroMusic(false);
   }
   const scroller = document.getElementById("modal-scroll");
   render(site);

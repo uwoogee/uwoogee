@@ -344,7 +344,23 @@ window.SITE = {
     },
     "cursor": {
       "pointer": "uploads/20261010-090826-hand.png",
-      "normal": "uploads/20261010-090828-arrow.png"
+      "normal": "uploads/20261010-090828-arrow.png",
+      "mode": "image",
+      "trail": {
+        "shape": "circle",
+        "dot": 12,
+        "ring": 40,
+        "ringHover": 50,
+        "blend": false,
+        "ease": 0.11,
+        "border": 2
+      }
+    },
+    "clickFx": {
+      "enabled": true,
+      "c3": "#4d4d4d",
+      "c2": "#b8b8b8",
+      "shape": "sparkle"
     }
   },
   "analytics": {
@@ -353,13 +369,46 @@ window.SITE = {
   "intro": {
     "frequency": "always",
     "enabled": true,
-    "logo": "uploads/20261011-140015-Untitled-1-02.png",
     "startSize": 30,
     "bg": "#000000",
     "transition": {
       "waveMs": 600,
       "handSize": 68,
       "text": "HELLO!"
+    },
+    "startHoverColor": "#ffe042",
+    "items": [
+      {
+        "type": "image",
+        "src": "uploads/20261011-140015-Untitled-1-02.png",
+        "width": 640,
+        "stars": true
+      },
+      {
+        "type": "start",
+        "gap": 52
+      },
+      {
+        "type": "image",
+        "src": "uploads/20261011-144829-dot2.gif",
+        "width": 128,
+        "gap": 114
+      },
+      {
+        "type": "text",
+        "text": "　...",
+        "font": "pixel",
+        "size": 22,
+        "gap": 0
+      }
+    ],
+    "music": {
+      "src": "uploads/20261011-145848-file.mp3",
+      "name": "배경음악.mp3",
+      "volume": 0.2,
+      "position": "top-right",
+      "hint": "소리켜기",
+      "afterStart": "continue"
     }
   }
 };
