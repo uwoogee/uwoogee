@@ -76,17 +76,22 @@
   .stickers.front { z-index: 5; }
   .sticker {
     position: absolute; display: block; height: auto;
-    opacity: 0; transform: rotate(var(--r)) scale(1.6);
+    opacity: 0; transform: rotate(var(--r));
     image-rendering: auto;
     filter: var(--sticker-shadow, drop-shadow(0 4px 6px rgba(0, 0, 0, .45)));
   }
-  .sticker.stuck { animation: sticker-slap .55s cubic-bezier(.2, .9, .3, 1.25) forwards; }
-  .sticker.instant { opacity: 1; transform: rotate(var(--r)) scale(1); }
-  @keyframes sticker-slap {
-    0%   { opacity: 0; transform: rotate(calc(var(--r) + 18deg)) scale(1.7); }
-    55%  { opacity: 1; transform: rotate(var(--r)) scale(.9); }
-    80%  { transform: rotate(var(--r)) scale(1.04); }
-    100% { opacity: 1; transform: rotate(var(--r)) scale(1); }
+  /* 붓으로 칠하듯: 부드러운 경계선이 한쪽 끝에서 반대쪽으로 지나가며 드러남 (방향은 스티커마다 --wd 등으로) */
+  .sticker.stuck {
+    opacity: 1;
+    --wipe: linear-gradient(var(--wd, to right), #000 42%, rgba(0, 0, 0, .75) 48%, rgba(0, 0, 0, .3) 54%, transparent 58%);
+    -webkit-mask: var(--wipe) var(--m0, 100% 0) / var(--ms, 300% 100%) no-repeat;
+    mask: var(--wipe) var(--m0, 100% 0) / var(--ms, 300% 100%) no-repeat;
+    animation: sticker-wipe var(--wipe-ms, .7s) cubic-bezier(.45, .05, .3, 1) forwards;
+  }
+  .sticker.instant { opacity: 1; -webkit-mask: none; mask: none; animation: none; }
+  @keyframes sticker-wipe {
+    from { -webkit-mask-position: var(--m0, 100% 0); mask-position: var(--m0, 100% 0); }
+    to   { -webkit-mask-position: var(--m1, 0 0); mask-position: var(--m1, 0 0); }
   }
 
   /* ---------- Header (GIF · 영상 · 이미지) ---------- */
@@ -386,16 +391,26 @@
   .intro {
     position: fixed; inset: 0; z-index: 100;
     background: var(--intro-bg, #2e2a35);
+    background-image: var(--intro-dots, none);
+    background-position: center;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     gap: 0;
     padding: 24px; overflow: hidden;
   }
   .intro[hidden] { display: none; }
+  /* 도트 패턴이 천천히 흘러가기 (편집기 > 진입 화면 > 배경) */
+  .intro.dots-flow { animation: intro-dots-flow var(--intro-dots-speed, 6s) linear infinite; }
+  .intro.dots-flow.leaving { animation: intro-out .6s ease forwards; }
+  @keyframes intro-dots-flow { to { background-position: var(--intro-dots-to); } }
   /* 사라질 때 (Windows 애니메이션 설정과 상관없이 재생되도록 animation 사용) */
   .intro.leaving { animation: intro-out .6s ease forwards; pointer-events: none; }
   @keyframes intro-out { to { opacity: 0; visibility: hidden; } }
   .intro img { display: block; height: auto; max-width: 86vw; image-rendering: pixelated; }
   .intro-logo-wrap { position: relative; }
+  /* 별이 붙은 로고는 별이 화면 밖으로 잘리지 않게 조금 더 좁게 */
+  .intro-logo-wrap:has(.intro-star) img { max-width: 72vw; }
+  /* 화면 높이가 모자라면 항목 전체를 같은 비율로 줄여서 한 화면에 (fitIntro) */
+  .intro > * { zoom: var(--intro-fit, 1); }
   /* 진입 화면 텍스트 (글꼴·크기·자간·줄 간격·색은 항목마다) */
   .intro-text {
     max-width: 90vw; text-align: center; white-space: pre-line;
@@ -582,7 +597,7 @@
 </div>
 
 <!-- 사이트 내용은 data.js에 들어 있습니다. 편집은 admin.html(편집기)에서 하세요. -->
-<script src="data.js?v=20261011192904"></script>
+<script src="data.js?v=20261011200030"></script>
 <script>
 const SOCIAL_ICONS = {
   instagram: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>',
@@ -689,7 +704,7 @@ function renderBlock(raw, i, j) {
   return f;
 }
 
-/* ---------- 스티커: 스크롤해서 그 위치가 화면에 들어오면 착! 붙고, 붙은 채로 남음 ----------
+/* ---------- 스티커: 스크롤해서 그 위치가 화면에 들어오면 붓으로 칠하듯 나타나고, 붙은 채로 남음 ----------
    카드 양옆 빈 공간에 좌우 번갈아 배치. 같은 설정이면 매번 같은 배치(번호로 섞음) */
 const stickerState = { cfg: null, key: "", observer: null, timer: 0 };
 function seededRandom(seed) {          // 같은 번호면 같은 순서의 '랜덤' 값
@@ -706,11 +721,19 @@ function layoutStickers() {
   const frontBox = document.getElementById("stickers-front");   // 헤더·카드 위 층
   const c = stickerState.cfg;
   const imgs = c && c.enabled ? (c.images || []).filter(Boolean) : [];
+  /* 팝업이 열려 있는 동안은 스크롤바가 사라져 폭이 살짝 바뀌는 것뿐이라 다시 배치하지 않음 */
+  if (document.body.classList.contains("modal-open")) return;
   const docH = Math.max(document.documentElement.scrollHeight, document.body.scrollHeight);
   const vw = document.documentElement.clientWidth;
-  const key = JSON.stringify([c, docH, vw]);
-  if (key === stickerState.key) return;             // 바뀐 게 없으면 다시 배치하지 않음
-  stickerState.key = key;
+  const cfgKey = JSON.stringify(c);
+  /* 스크롤바 정도(30px 이하)의 폭 변화·작은 길이 변화는 무시 */
+  const prev = stickerState.dims;
+  if (cfgKey === stickerState.key && prev && Math.abs(prev.vw - vw) <= 30 && Math.abs(prev.docH - docH) <= 4) return;
+  /* 설정은 그대로이고 창 크기만 바뀌었으면, 이미 붙어 있던 개수만큼은 애니메이션 없이 바로 붙여둠 */
+  const keepStuck = cfgKey === stickerState.key && stickerState.list
+    ? stickerState.list.filter(s => s.classList.contains("stuck") || s.classList.contains("instant")).length : 0;
+  stickerState.key = cfgKey;
+  stickerState.dims = { vw, docH };
   if (stickerState.observer) stickerState.observer.disconnect();
   box.innerHTML = frontBox.innerHTML = "";
   if (!imgs.length) { box.style.height = frontBox.style.height = "0px"; return; }
@@ -735,6 +758,17 @@ function layoutStickers() {
   const hero = document.getElementById("hero");
   const startY = c.fromTop ? 40 : Math.max(40, hero.offsetHeight + 40);
   const order = imgs.map((_, i) => i).sort(() => rand() - .5);
+  /* 칠하는 방향: [그라데이션 방향, 마스크 크기, 시작 위치, 끝 위치] */
+  const WIPES = {
+    lr: ["to right", "300% 100%", "100% 0", "0 0"],
+    rl: ["to left", "300% 100%", "0 0", "100% 0"],
+    tb: ["to bottom", "100% 300%", "0 100%", "0 0"],
+    bt: ["to top", "100% 300%", "0 0", "0 100%"],
+  };
+  const wipeKeys = WIPES[c.wipeDir] ? [c.wipeDir] : Object.keys(WIPES);
+  const wipeRand = seededRandom((c.seed || 1) + 7);   // 배치는 그대로 두고 방향만 따로 섞음
+  const wipeMs = Math.max(150, Math.min(3000, Number(c.wipeMs) || 700));
+  [box, frontBox].forEach(b => b.style.setProperty("--wipe-ms", wipeMs + "ms"));
 
   let y = startY, k = 0;
   while (y < docH - base * .6) {
@@ -753,6 +787,11 @@ function layoutStickers() {
     img.draggable = false;
     Object.assign(img.style, { left: x + "px", top: y + (rand() - .5) * gapY * .5 + "px", width: size + "px" });
     img.style.setProperty("--r", ((rand() * 2 - 1) * rot).toFixed(1) + "deg");
+    const [wd, ms, m0, m1] = WIPES[wipeKeys[Math.floor(wipeRand() * wipeKeys.length) % wipeKeys.length]];
+    img.style.setProperty("--wd", wd); img.style.setProperty("--ms", ms);
+    img.style.setProperty("--m0", m0); img.style.setProperty("--m1", m1);
+    /* 다 칠해지면 마스크를 걷어냄 */
+    img.addEventListener("animationend", () => img.classList.add("instant"), { once: true });
     const top = parseFloat(img.style.top);
     const onTop = layer === "front" || (layer === "auto" && top + size / 2 < cardsTop);
     (onTop ? frontBox : box).appendChild(img);
@@ -763,6 +802,7 @@ function layoutStickers() {
   /* 위에서부터 순서대로 (같은 높이면 왼쪽부터) */
   stickerState.list = [...box.querySelectorAll(".sticker"), ...frontBox.querySelectorAll(".sticker")]
     .sort((a, b) => parseFloat(a.style.top) - parseFloat(b.style.top) || parseFloat(a.style.left) - parseFloat(b.style.left));
+  stickerState.list.slice(0, keepStuck).forEach(s => s.classList.add("instant"));
   stickerState.queue = new Set();
   stickerState.gap = Math.max(40, Math.min(1500, Number(c.interval ?? 220)));
   clearInterval(stickerState.pump); stickerState.pump = 0;
@@ -965,6 +1005,120 @@ function applyCursor(c) {
    - 소리 없음·화면 안에서 재생을 '속성'으로 확실히 지정 (아이폰은 이게 없으면 자동재생을 막음)
    - #t=0.001: 자동재생이 막혀도 첫 장면은 보이게 (아이폰 저전력 모드 등)
    - 그래도 막히면 화면을 처음 터치하거나 스크롤할 때 재생 */
+/* ---------- 휴대폰에서 GIF 가 멈춰 보이는 문제 대비 ----------
+   아이폰의 '동작 줄이기'·'움직이는 이미지 자동 재생 끔'·저전력 모드, 숨겨졌다 나타난 GIF 가 멈추는 브라우저 버그 등으로
+   휴대폰에서 GIF 가 첫 장면에 멈춰 있을 때가 있음 → 휴대폰에서는 GIF 를 직접 풀어서 프레임을 하나씩 넘겨 재생 */
+function lzwDecode(minSize, data, count) {
+  const out = new Uint8Array(count);
+  const clear = 1 << minSize, eoi = clear + 1;
+  const prefix = new Int16Array(4096), suffix = new Uint8Array(4096), stack = new Uint8Array(4097);
+  for (let i = 0; i < clear; i++) suffix[i] = i;
+  let size = minSize + 1, mask = (1 << size) - 1, next = eoi + 1;
+  let old = -1, first = 0, bits = 0, cur = 0, dp = 0, op = 0;
+  while (op < count) {
+    while (bits < size) { if (dp >= data.length) return out; cur |= data[dp++] << bits; bits += 8; }
+    let code = cur & mask; cur >>>= size; bits -= size;
+    if (code === clear) { size = minSize + 1; mask = (1 << size) - 1; next = eoi + 1; old = -1; continue; }
+    if (code === eoi) break;
+    if (old === -1) { out[op++] = suffix[code]; old = first = code; continue; }
+    const inCode = code; let sp = 0;
+    if (code >= next) { stack[sp++] = first; code = old; }
+    while (code > eoi) { stack[sp++] = suffix[code]; code = prefix[code]; }
+    first = suffix[code]; stack[sp++] = first;
+    while (sp && op < count) out[op++] = stack[--sp];
+    if (next < 4096) {
+      prefix[next] = old; suffix[next] = first; next++;
+      if ((next & mask) === 0 && next < 4096) { size++; mask = (1 << size) - 1; }
+    }
+    old = inCode;
+  }
+  return out;
+}
+/* GIF → [{ data: ImageData, delay(ms) }] (프레임마다 앞 장면과 합쳐진 완성 화면) */
+function decodeGif(buf, maxBytes = 120e6) {
+  const b = new Uint8Array(buf);
+  let p = 0;
+  const u16 = () => b[p++] | (b[p++] << 8);
+  if (b[0] !== 0x47 || b[1] !== 0x49 || b[2] !== 0x46) throw new Error("not gif");
+  p = 6;
+  const W = u16(), H = u16(), flags = b[p++]; p += 2;
+  if (W * H * 4 > maxBytes) throw new Error("too big");
+  let gct = null;
+  if (flags & 0x80) { const n = 3 << ((flags & 7) + 1); gct = b.subarray(p, p + n); p += n; }
+  const canvas = new Uint8ClampedArray(W * H * 4);
+  const frames = [];
+  let gce = { disp: 0, delay: 100, ti: -1 };
+  while (p < b.length) {
+    const t = b[p++];
+    if (t === 0x3B) break;
+    if (t === 0x21) {
+      const label = b[p++];
+      if (label === 0xF9) { const fl = b[p + 1]; gce = { disp: (fl >> 2) & 7, delay: (b[p + 2] | (b[p + 3] << 8)) * 10, ti: fl & 1 ? b[p + 4] : -1 }; }
+      for (let s; (s = b[p++]);) p += s;
+      continue;
+    }
+    if (t !== 0x2C) break;
+    const fx = u16(), fy = u16(), fw = u16(), fh = u16(), ff = b[p++];
+    let ct = gct;
+    if (ff & 0x80) { const n = 3 << ((ff & 7) + 1); ct = b.subarray(p, p + n); p += n; }
+    const minSize = b[p++];
+    const chunks = []; let len = 0;
+    for (let s; (s = b[p++]);) { chunks.push(b.subarray(p, p + s)); len += s; p += s; }
+    const data = new Uint8Array(len); let o = 0;
+    chunks.forEach(c => { data.set(c, o); o += c.length; });
+    const idx = lzwDecode(minSize, data, fw * fh);
+    /* 줄 순서 (interlace 면 8·8·4·2 간격 순서) */
+    const rows = [];
+    if (ff & 0x40) [[0, 8], [4, 8], [2, 4], [1, 2]].forEach(([s, st]) => { for (let y = s; y < fh; y += st) rows.push(y); });
+    else for (let y = 0; y < fh; y++) rows.push(y);
+    const saved = gce.disp === 3 ? canvas.slice() : null;
+    if (ct) for (let r = 0; r < fh; r++) {
+      const y = fy + rows[r]; if (y >= H) continue;
+      for (let x = 0; x < fw; x++) {
+        const ci = idx[r * fw + x];
+        if (ci === gce.ti || fx + x >= W) continue;
+        const d = (y * W + fx + x) * 4;
+        canvas[d] = ct[ci * 3]; canvas[d + 1] = ct[ci * 3 + 1]; canvas[d + 2] = ct[ci * 3 + 2]; canvas[d + 3] = 255;
+      }
+    }
+    frames.push({ data: new ImageData(canvas.slice(), W, H), delay: gce.delay < 20 ? 100 : gce.delay });
+    if ((frames.length + 1) * W * H * 4 > maxBytes) break;
+    /* 다음 프레임 전에 지우기(2) / 되돌리기(3) */
+    if (gce.disp === 2) for (let y = fy; y < Math.min(H, fy + fh); y++) canvas.fill(0, (y * W + fx) * 4, (y * W + Math.min(W, fx + fw)) * 4);
+    else if (gce.disp === 3 && saved) canvas.set(saved);
+    gce = { disp: 0, delay: 100, ti: -1 };
+  }
+  return { W, H, frames };
+}
+const isPhone = () => matchMedia("(pointer: coarse)").matches || window.innerWidth < 560;
+/* root 안의 GIF <img> 들을 직접 재생 (img 는 그대로 두고 src 만 프레임 그림으로 바꿔 끼움 → 크기·스타일 그대로) */
+function playGifsManually(root) {
+  if (!isPhone() || !window.ImageData) return;
+  root.querySelectorAll("img").forEach(async img => {
+    const src = img.getAttribute("src") || "";
+    if (!/\.gif(\?|#|$)/i.test(src) || img._gifPlayer === src) return;
+    img._gifPlayer = src;
+    try {
+      const buf = await (await fetch(src)).arrayBuffer();
+      const { W, H, frames } = decodeGif(buf);
+      if (frames.length < 2 || img.getAttribute("src") !== src) return;
+      const cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+      const ctx = cv.getContext("2d");
+      const urls = await Promise.all(frames.map(f => { ctx.putImageData(f.data, 0, 0); return new Promise(r => cv.toBlob(bl => r(URL.createObjectURL(bl)))); }));
+      /* 미리 다 풀어둬서 바꿔 끼울 때 깜빡이지 않게 */
+      await Promise.all(urls.map(u => { const im = new Image(); im.src = u; return im.decode().catch(() => {}); }));
+      let k = 0;
+      const tick = () => {
+        if (!img.isConnected || img._gifPlayer !== src) { urls.forEach(URL.revokeObjectURL); return; }
+        img.src = urls[k];
+        setTimeout(tick, frames[k].delay);
+        k = (k + 1) % urls.length;
+      };
+      tick();
+    } catch { /* 못 풀면 원래 GIF 그대로 */ }
+  });
+}
+
 function makeAutoplayVideo(src) {
   const v = document.createElement("video");
   v.muted = true; v.defaultMuted = true;
@@ -1041,7 +1195,7 @@ function render(site) {
     if (!isVideo) { el.src = p.header; el.alt = ""; el.draggable = false; }
     el.dataset.src = p.header;
     hero.appendChild(el);
-    if (isVideo) ensureAutoplay(el);
+    if (isVideo) ensureAutoplay(el); else playGifsManually(hero);
   }
   document.getElementById("logo").textContent = p.logo || "";
   /* 프로필 사진이 없으면 동그라미 자체를 숨김 */
@@ -1266,6 +1420,86 @@ render(SITE_DATA);
 const intro = document.getElementById("intro");
 const INTRO_STARS = [[-6, -18], [96, 2], [-12, 72]];   // 로고 기준 별 위치 (%)
 
+/* ---------- 진입 화면 도트 패턴 (편집기 > 진입 화면 > 도트 패턴 배경) ----------
+   한 장의 SVG 타일을 만들어 바둑판처럼 반복. 격자 / 엇갈림 / 불규칙 배치,
+   크기·진하기·회전 들쭉날쭉, 색 섞기, 반짝임(SMIL), 흐르기(배경 위치 애니메이션) */
+const DOT_SHAPES = {
+  round:   r => `<circle r='${r}'/>`,
+  square:  r => `<rect x='${-r}' y='${-r}' width='${r * 2}' height='${r * 2}'/>`,
+  diamond: r => `<path d='M0 ${-r}L${r} 0L0 ${r}L${-r} 0Z'/>`,
+  plus:    r => { const t = r * .36; return `<path d='M${-t} ${-r}H${t}V${-t}H${r}V${t}H${t}V${r}H${-t}V${t}H${-r}V${-t}H${-t}Z'/>`; },
+  ring:    r => `<circle r='${r * .78}' fill='none' stroke='currentColor' stroke-width='${r * .44}'/>`,
+  star:    r => { let d = ""; for (let i = 0; i < 10; i++) { const a = Math.PI / 5 * i - Math.PI / 2, k = i % 2 ? r * .45 : r; d += (i ? "L" : "M") + (Math.cos(a) * k).toFixed(2) + " " + (Math.sin(a) * k).toFixed(2); } return `<path d='${d}Z'/>`; },
+  heart:   r => `<path transform='scale(${r / 10})' d='M0 9C-12 0-10-9-5-9C-2-9 0-6 0-5C0-6 2-9 5-9C10-9 12 0 0 9Z'/>`,
+};
+function introDotsTile(c) {
+  const mobile = window.innerWidth < 560 ? .6 : 1;    // 휴대폰에서는 60% 크기 (스티커와 같은 비율)
+  const size = Math.max(1, Math.min(500, Number(c.dotSize ?? 4)) * mobile);
+  const gap = Math.max(4, Math.min(1000, Number(c.dotGap ?? 24)) * mobile);
+  const hex = v => /^#[0-9a-f]{3,8}$/i.test(v || "") ? v : null;
+  const colors = [hex(c.dotColor) || "#ffffff"];
+  if (c.dotMix) colors.push(hex(c.dotColor2) || "#ffe042", hex(c.dotColor3) || "#6fd3ff");
+  const alpha = Math.max(0, Math.min(1, Number(c.dotOpacity ?? .25)));
+  const layout = ["grid", "stagger", "random"].includes(c.dotLayout) ? c.dotLayout : "grid";
+  const jitter = layout === "random" ? Math.max(0, Math.min(1, Number(c.dotJitter ?? .8))) : 0;
+  const sizeVary = Math.max(0, Math.min(1, Number(c.dotSizeVary ?? 0)));
+  const opVary = Math.max(0, Math.min(1, Number(c.dotOpacityVary ?? 0)));
+  const rotVary = Math.max(0, Math.min(180, Number(c.dotRotate ?? 0)));
+  const shapes = (Array.isArray(c.dotShapes) && c.dotShapes.length ? c.dotShapes : [c.dotShape || "round"]).filter(s => DOT_SHAPES[s]);
+  if (!shapes.length) shapes.push("round");
+  const twinkle = c.dotTwinkle === true || c.dotTwinkle === "pop" ? c.dotTwinkle : false;   // true: 부드럽게, pop: 툭툭
+  const twSpeed = Math.max(.1, Math.min(10, Number(c.dotTwinkleSpeed ?? 1)));    // 클수록 빠르게
+  /* 모두 같은 점이면 한 칸 타일로 충분, 하나라도 들쭉날쭉하면 8×8 칸 타일 */
+  const varied = jitter || sizeVary || opVary || rotVary || colors.length > 1 || shapes.length > 1 || twinkle;
+  const n = varied ? 8 : layout === "stagger" ? 2 : 1;
+  const T = gap * n;
+  const rand = seededRandom(c.dotSeed || 1);
+  let body = "";
+  for (let row = 0; row < n; row++) for (let col = 0; col < n; col++) {
+    let x = (col + .5) * gap + (layout === "stagger" && row % 2 ? gap / 2 : 0);
+    let y = (row + .5) * gap;
+    x += (rand() - .5) * gap * jitter * 1.6;
+    y += (rand() - .5) * gap * jitter * 1.6;
+    const r = size / 2 * (1 - sizeVary * rand());
+    const op = alpha * (1 - opVary * rand());
+    const rot = (rand() * 2 - 1) * rotVary;
+    const color = colors[Math.floor(rand() * colors.length) % colors.length];
+    const shape = DOT_SHAPES[shapes[Math.floor(rand() * shapes.length) % shapes.length]](r.toFixed(2));
+    let tw = "";
+    if (twinkle === "pop") {
+      /* 툭 켜졌다 툭 꺼짐: 꺼져 있는 구간 위치·길이를 점마다 다르게 */
+      const a = (.1 + rand() * .5).toFixed(2), b = Math.min(.95, Number(a) + .15 + rand() * .35).toFixed(2);
+      tw = `<animate attributeName='opacity' calcMode='discrete' values='1;0;1' keyTimes='0;${a};${b}' dur='${((1.2 + rand() * 2.4) / twSpeed).toFixed(2)}s' begin='-${(rand() * 4 / twSpeed).toFixed(2)}s' repeatCount='indefinite'/>`;
+    } else if (twinkle) {
+      tw = `<animate attributeName='opacity' values='1;.12;1' dur='${((2 + rand() * 3) / twSpeed).toFixed(2)}s' begin='-${(rand() * 5 / twSpeed).toFixed(2)}s' repeatCount='indefinite'/>`;
+    }
+    /* 타일 가장자리에 걸친 점은 반대편에도 그려서 이음새가 안 보이게 */
+    const reach = r + 2;
+    for (const dx of [-T, 0, T]) for (const dy of [-T, 0, T]) {
+      const px = x + dx, py = y + dy;
+      if (px + reach < 0 || px - reach > T || py + reach < 0 || py - reach > T) continue;
+      body += `<g transform='translate(${px.toFixed(2)} ${py.toFixed(2)}) rotate(${rot.toFixed(1)})' fill='${color}' color='${color}' opacity='${op.toFixed(3)}'>${shape}${tw}</g>`;
+    }
+  }
+  const crisp = shapes.every(s => s === "square") && !rotVary ? " shape-rendering='crispEdges'" : "";
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='${T}' height='${T}' viewBox='0 0 ${T} ${T}'${crisp}>${body}</svg>`;
+  return { url: `url("data:image/svg+xml,${encodeURIComponent(svg)}")`, T };
+}
+const DOT_FLOW = { diag: [1, 1], up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
+function applyIntroDots(c) {
+  const props = ["--intro-dots", "--intro-dots-to", "--intro-dots-speed"];
+  if (c.dots !== true) { props.forEach(k => intro.style.removeProperty(k)); intro.classList.remove("dots-flow"); return; }
+  const { url, T } = introDotsTile(c);
+  intro.style.setProperty("--intro-dots", url);
+  const flow = DOT_FLOW[c.dotFlow === true ? "diag" : c.dotFlow];
+  if (flow) {
+    const speed = Math.max(2, Math.min(400, Number(c.dotSpeed ?? 30)));       // 초당 px
+    intro.style.setProperty("--intro-dots-to", `calc(50% + ${flow[0] * T}px) calc(50% + ${flow[1] * T}px)`);
+    intro.style.setProperty("--intro-dots-speed", (T * Math.hypot(...flow) / speed).toFixed(2) + "s");
+  }
+  intro.classList.toggle("dots-flow", !!flow);
+}
+
 function buildIntro(c) {
   const px = v => v != null && !isNaN(v) ? Number(v) + "px" : null;
   const vars = { "--intro-bg": c.bg, "--intro-gap": px(c.gap), "--intro-logo-w": px(c.logoWidth),
@@ -1275,6 +1509,7 @@ function buildIntro(c) {
     "--intro-start-w": px(c.startWidth), "--intro-start-color": c.startColor,
     "--intro-star-color": c.starColor, "--intro-star-size": px(c.starSize) };
   Object.entries(vars).forEach(([k, v]) => v ? intro.style.setProperty(k, v) : intro.style.removeProperty(k));
+  applyIntroDots(c);
 
   const starsHTML = INTRO_STARS.map(([x, y], k) =>
     `<span class="intro-star" style="left:${x}%;top:${y}%;animation-delay:${k * .7}s">★</span>`).join("");
@@ -1314,6 +1549,10 @@ function buildIntro(c) {
     if (c.image) parts.push(`<img class="intro-img" src="${esc(c.image)}" alt="">`);
   }
   intro.innerHTML = parts.join("");
+  fitIntro();
+  playGifsManually(intro);
+  intro.querySelectorAll("img").forEach(img => img.complete || img.addEventListener("load", fitIntro, { once: true }));
+  if (document.fonts) document.fonts.ready.then(fitIntro);
 
   /* 글자 START 나 픽셀 글꼴 텍스트를 쓸 때만 픽셀 글꼴을 불러옴 */
   const needPixel = !c.startImage || (c.items || []).some(it => it.type === "text" && it.font === "pixel");
@@ -1324,6 +1563,20 @@ function buildIntro(c) {
     document.head.appendChild(link);
   }
 }
+
+/* 진입 화면 내용이 화면보다 길면 같은 비율로 줄임 (휴대폰 · 낮은 창) */
+function fitIntro() {
+  if (intro.hidden || !intro.children.length) return;
+  intro.style.setProperty("--intro-fit", "1");
+  const kids = [...intro.children].filter(e => e.offsetParent !== null);
+  if (!kids.length) return;
+  const top = Math.min(...kids.map(e => e.getBoundingClientRect().top));
+  const bottom = Math.max(...kids.map(e => e.getBoundingClientRect().bottom));
+  const avail = intro.clientHeight - 48;
+  const fit = bottom - top > avail ? Math.max(.4, avail / (bottom - top)) : 1;
+  intro.style.setProperty("--intro-fit", fit.toFixed(3));
+}
+window.addEventListener("resize", () => fitIntro());
 
 let introKeyHandler = null;
 let introPreviewKey = null;
@@ -1409,6 +1662,31 @@ function fadeVolume(audio, to, ms, done) {
   }, 30);
 }
 
+/* ---------- 아이폰·아이패드 ----------
+   1) 무음(벨소리 끔) 모드면 기기 설정을 따라 소리가 안 나게: 오디오 세션을 'ambient' 로
+   2) 아이폰은 <audio> 의 볼륨 조절을 무시해서 늘 최대 소리로 나옴 → Web Audio 의 볼륨 노드를 거쳐서 재생
+      (Web Audio 도 무음 모드를 따름) */
+const IS_IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+try { if (navigator.audioSession) navigator.audioSession.type = "ambient"; } catch {}
+let sharedAudioCtx = null;
+function volumeControl(audio) {
+  if (!IS_IOS) return audio;                       // PC·안드로이드는 <audio> 볼륨이 잘 동작
+  try {
+    const C = window.AudioContext || window.webkitAudioContext;
+    sharedAudioCtx ||= new C();
+    const ctx = sharedAudioCtx, gain = ctx.createGain();
+    ctx.createMediaElementSource(audio).connect(gain).connect(ctx.destination);
+    audio.volume = 1;                                // 소리 크기는 볼륨 노드에서만 조절
+    let level = 0;
+    const apply = () => { gain.gain.value = audio.muted ? 0 : level; };
+    audio.addEventListener("volumechange", apply);
+    apply();
+    return { ctx, get volume() { return level; }, set volume(v) { level = v; apply(); } };
+  } catch { return audio; }
+}
+/* 화면 터치로 소리가 허락되는 이벤트들 (터치는 pointerdown 으로는 허락이 안 됨) */
+const UNLOCK_EVENTS = ["pointerdown", "touchend", "click", "keydown"];
+
 /* 음악 하나 (m: 설정, key: 볼륨 기억용 이름, skipUnlock: 이 요소를 눌렀을 땐 재생 시작 안 함) */
 function createBgm(m, key, skipUnlock) {
   const fadeMs = Math.max(0, Number(m.fade ?? 1.5)) * 1000;
@@ -1418,7 +1696,19 @@ function createBgm(m, key, skipUnlock) {
   const audio = new Audio(m.src);
   audio.loop = m.loop !== false;
   audio.volume = 0;
+  const out = volumeControl(audio);                 // 볼륨은 항상 out 으로 (아이폰이면 Web Audio 볼륨 노드)
+  out.volume = 0;
   const bgm = { audio, ui: null, unlock: null, ducked: false, stopped: false };
+  /* 재생 시작. 아이폰은 Web Audio 가 깨어나야 소리가 나므로, 못 깨우면 '막힘' 으로 처리 */
+  const start = () => {
+    if (out.ctx && out.ctx.state !== "running") out.ctx.resume().catch(() => {});
+    return audio.play().then(() => {
+      if (!out.ctx || out.ctx.state === "running") return;
+      return new Promise(r => setTimeout(r, 300)).then(() => {
+        if (out.ctx.state !== "running") { audio.pause(); throw new Error("blocked"); }
+      });
+    });
+  };
 
   const ui = document.createElement("div");
   ui.className = "intro-sound" + (String(m.position || "").includes("top") ? " top" : "") + (String(m.position || "").includes("left") ? " left" : "");
@@ -1438,8 +1728,8 @@ function createBgm(m, key, skipUnlock) {
   /* 페이드인으로 재생 */
   bgm.play = () => {
     if (bgm.stopped) return;
-    audio.volume = 0;
-    return audio.play().then(() => { fadeVolume(audio, target, fadeMs); paint(); }).catch(paint);
+    out.volume = 0;
+    return start().then(() => { fadeVolume(out, target, fadeMs); paint(); }).catch(paint);
   };
   btn.addEventListener("click", e => {
     e.stopPropagation();
@@ -1448,41 +1738,39 @@ function createBgm(m, key, skipUnlock) {
   });
   range.addEventListener("input", () => {
     target = Number(range.value);
-    clearInterval(audio._fade);
-    if (!bgm.ducked) audio.volume = target;
+    clearInterval(out._fade);
+    if (!bgm.ducked) out.volume = target;
     audio.muted = false;
     try { localStorage.setItem(key, range.value); } catch {}
     if (audio.paused && !bgm.ducked && target > 0) bgm.play(); else paint();
   });
   ui.addEventListener("pointerdown", e => e.stopPropagation());
 
-  /* 휴대폰·태블릿(터치 기기): 음소거 상태로 시작 → 🔇 버튼을 직접 눌러야 켜짐 */
-  const touchOnly = matchMedia("(hover: none) and (pointer: coarse)").matches;
-  const startMuted = touchOnly && SITE_DATA.musicMobile !== "auto";
-  /* PC: 자동재생 시도 → 막히면 화면을 처음 누를 때 재생 */
-  audio.volume = 0;
-  (startMuted ? Promise.reject() : audio.play()).then(() => { fadeVolume(audio, target, fadeMs); paint(); }).catch(() => {
-    paint();
-    if (startMuted) return;
+  /* 자동재생 시도 (PC·휴대폰 모두 설정한 볼륨으로) → 브라우저가 막으면 화면을 처음 누를 때 재생 */
+  out.volume = 0;
+  start().then(() => { fadeVolume(out, target, fadeMs); paint(); }).catch(() => {
     paint();
     bgm.unlock = e => {
       if (e.target.closest && e.target.closest(".intro-sound")) return;
       if (skipUnlock && e.target.closest && e.target.closest(skipUnlock)) return;
-      document.removeEventListener("pointerdown", bgm.unlock, true);
-      bgm.unlock = null;
-      if (audio.paused && !bgm.ducked) bgm.play();
+      if (!audio.paused || bgm.ducked || bgm.stopped) return;
+      bgm.play().then(() => {
+        if (audio.paused) return;                   // 이 이벤트로는 허락이 안 됐으면 다음 터치에 다시
+        UNLOCK_EVENTS.forEach(t => document.removeEventListener(t, bgm.unlock, true));
+        bgm.unlock = null;
+      });
     };
-    document.addEventListener("pointerdown", bgm.unlock, true);
+    UNLOCK_EVENTS.forEach(t => document.addEventListener(t, bgm.unlock, true));
   });
 
   /* 페이드아웃으로 끄고 치우기 */
   bgm.stop = (fade = true) => {
     bgm.stopped = true;
-    if (bgm.unlock) { document.removeEventListener("pointerdown", bgm.unlock, true); bgm.unlock = null; }
+    if (bgm.unlock) { UNLOCK_EVENTS.forEach(t => document.removeEventListener(t, bgm.unlock, true)); bgm.unlock = null; }
     ui.classList.add("leaving");
     setTimeout(() => ui.remove(), fade ? 450 : 0);
-    if (!fade || audio.paused) { clearInterval(audio._fade); audio.pause(); return; }
-    fadeVolume(audio, 0, fadeMs, () => audio.pause());
+    if (!fade || audio.paused) { clearInterval(out._fade); audio.pause(); return; }
+    fadeVolume(out, 0, fadeMs, () => audio.pause());
   };
   /* 영상 재생 중: 서서히 끄기 / 영상이 멈추면: 다시 서서히 켜기 */
   bgm.duck = on => {
@@ -1490,7 +1778,7 @@ function createBgm(m, key, skipUnlock) {
     if (on) {
       bgm.wasPlaying = !audio.paused;
       bgm.ducked = true;
-      if (bgm.wasPlaying) fadeVolume(audio, 0, Math.min(fadeMs, 800), () => { if (bgm.ducked) audio.pause(); });
+      if (bgm.wasPlaying) fadeVolume(out, 0, Math.min(fadeMs, 800), () => { if (bgm.ducked) audio.pause(); });
     } else {
       bgm.ducked = false;
       if (bgm.wasPlaying) bgm.play();

@@ -381,8 +381,8 @@ window.SITE = {
       {
         "type": "image",
         "src": "uploads/20261011-140015-Untitled-1-02.png",
-        "width": 640,
-        "stars": true
+        "stars": true,
+        "width": 568
       },
       {
         "type": "start",
@@ -411,7 +411,17 @@ window.SITE = {
       "fade": 2
     },
     "starSize": 58,
-    "startColor": "#9e9e9e"
+    "startColor": "#9e9e9e",
+    "dots": true,
+    "dotSize": 330,
+    "dotGap": 627,
+    "dotOpacity": 1,
+    "dotColor": "#1c1c1c",
+    "dotTwinkle": "pop",
+    "dotSizeVary": 0.5,
+    "dotTwinkleSpeed": 0.2,
+    "dotLayout": "random",
+    "dotJitter": 0.65
   },
   "stickers": {
     "images": [
@@ -432,7 +442,8 @@ window.SITE = {
     "fromTop": true,
     "interval": 120,
     "sizeVary": 0.4,
-    "density": 4
+    "density": 4,
+    "wipeMs": 200
   },
   "mainMusic": {
     "src": "uploads/20261011-162514-file.mp3",
