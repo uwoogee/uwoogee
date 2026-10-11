@@ -419,7 +419,7 @@ window.SITE = {
     "dotColor": "#1c1c1c",
     "dotTwinkle": "pop",
     "dotSizeVary": 0.5,
-    "dotTwinkleSpeed": 0.2,
+    "dotTwinkleSpeed": 0.4,
     "dotLayout": "random",
     "dotJitter": 0.65
   },
