@@ -395,7 +395,6 @@ window.SITE = {
       {
         "type": "image",
         "src": "uploads/20261011-140015-Untitled-1-02.png",
-        "stars": true,
         "width": 568
       },
       {
@@ -407,13 +406,6 @@ window.SITE = {
         "src": "uploads/20261011-144829-dot2.gif",
         "width": 128,
         "gap": 114
-      },
-      {
-        "type": "text",
-        "text": "　...",
-        "font": "pixel",
-        "size": 22,
-        "gap": 0
       }
     ],
     "music": {
@@ -425,7 +417,6 @@ window.SITE = {
       "fade": 2
     },
     "starSize": 58,
-    "startColor": "#9e9e9e",
     "dots": true,
     "dotSize": 330,
     "dotGap": 627,
@@ -435,7 +426,8 @@ window.SITE = {
     "dotSizeVary": 0.5,
     "dotTwinkleSpeed": 0.4,
     "dotLayout": "random",
-    "dotJitter": 0.65
+    "dotJitter": 0.65,
+    "startColor": "#b3b3b3"
   },
   "stickers": {
     "images": [
