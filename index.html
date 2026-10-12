@@ -80,18 +80,77 @@
     image-rendering: auto;
     filter: var(--sticker-shadow, drop-shadow(0 4px 6px rgba(0, 0, 0, .45)));
   }
-  /* 붓으로 칠하듯: 부드러운 경계선이 한쪽 끝에서 반대쪽으로 지나가며 드러남 (방향은 스티커마다 --wd 등으로) */
-  .sticker.stuck {
-    opacity: 1;
+  /* 붙는 애니메이션 (편집기 > 스티커 > 등장 애니메이션). 속도는 모두 --wipe-ms 기준 */
+  .sticker.stuck { opacity: 1; }
+  .sticker.instant { opacity: 1; -webkit-mask: none; mask: none; animation: none; }
+  /* 칠하기: 부드러운 경계선이 한쪽 끝에서 반대쪽으로 지나가며 드러남 (방향은 스티커마다 --wd 등으로) */
+  .sticker.stuck:not(.instant).a-wipe {
     --wipe: linear-gradient(var(--wd, to right), #000 42%, rgba(0, 0, 0, .75) 48%, rgba(0, 0, 0, .3) 54%, transparent 58%);
     -webkit-mask: var(--wipe) var(--m0, 100% 0) / var(--ms, 300% 100%) no-repeat;
     mask: var(--wipe) var(--m0, 100% 0) / var(--ms, 300% 100%) no-repeat;
     animation: sticker-wipe var(--wipe-ms, .7s) cubic-bezier(.45, .05, .3, 1) forwards;
   }
-  .sticker.instant { opacity: 1; -webkit-mask: none; mask: none; animation: none; }
   @keyframes sticker-wipe {
     from { -webkit-mask-position: var(--m0, 100% 0); mask-position: var(--m0, 100% 0); }
     to   { -webkit-mask-position: var(--m1, 0 0); mask-position: var(--m1, 0 0); }
+  }
+  /* 착! 붙기: 크게 날아와 눌리듯 */
+  .sticker.stuck:not(.instant).a-slap { animation: sticker-slap calc(var(--wipe-ms, .7s) * .8) cubic-bezier(.2, .9, .3, 1.25) both; }
+  @keyframes sticker-slap {
+    0%   { opacity: 0; transform: rotate(calc(var(--r) + 18deg)) scale(1.7); }
+    55%  { opacity: 1; transform: rotate(var(--r)) scale(.9); }
+    80%  { transform: rotate(var(--r)) scale(1.04); }
+    100% { opacity: 1; transform: rotate(var(--r)) scale(1); }
+  }
+  /* 도장: 위에서 쾅 찍히고 살짝 흔들림 */
+  .sticker.stuck:not(.instant).a-stamp { animation: sticker-stamp calc(var(--wipe-ms, .7s) * .8) ease-in both; }
+  @keyframes sticker-stamp {
+    0%   { opacity: 0; transform: rotate(var(--r)) scale(2.4); }
+    50%  { opacity: 1; transform: rotate(var(--r)) scale(.93); animation-timing-function: ease-out; }
+    65%  { transform: rotate(var(--r)) scale(1.02) translate(-3px, 2px); }
+    80%  { transform: rotate(var(--r)) scale(1) translate(3px, -1px); }
+    100% { opacity: 1; transform: rotate(var(--r)) scale(1) translate(0, 0); }
+  }
+  /* 톡 튀어나오기: 0에서 커지며 통통 */
+  .sticker.stuck:not(.instant).a-pop { animation: sticker-pop var(--wipe-ms, .7s) cubic-bezier(.3, 1.6, .5, 1) both; }
+  @keyframes sticker-pop {
+    0%   { opacity: 0; transform: rotate(var(--r)) scale(0); }
+    30%  { opacity: 1; }
+    100% { opacity: 1; transform: rotate(var(--r)) scale(1); }
+  }
+  /* 떨어지기: 위에서 툭 떨어져 살짝 튕김 */
+  .sticker.stuck:not(.instant).a-drop { animation: sticker-drop var(--wipe-ms, .7s) cubic-bezier(.3, 1.35, .5, 1) both; }
+  @keyframes sticker-drop {
+    0%   { opacity: 0; transform: translateY(-90px) rotate(calc(var(--r) - 12deg)); }
+    35%  { opacity: 1; }
+    100% { opacity: 1; transform: translateY(0) rotate(var(--r)); }
+  }
+  /* 빙글: 돌면서 나타남 */
+  .sticker.stuck:not(.instant).a-spin { animation: sticker-spin var(--wipe-ms, .7s) cubic-bezier(.2, .9, .3, 1.1) both; }
+  @keyframes sticker-spin {
+    0%   { opacity: 0; transform: rotate(calc(var(--r) - 300deg)) scale(.2); }
+    60%  { opacity: 1; }
+    100% { opacity: 1; transform: rotate(var(--r)) scale(1); }
+  }
+  /* 뒤집혀 붙기: 카드처럼 옆으로 뒤집히며 붙음 */
+  .sticker.stuck:not(.instant).a-flip { animation: sticker-flip var(--wipe-ms, .7s) cubic-bezier(.25, .8, .35, 1.15) both; }
+  @keyframes sticker-flip {
+    0%   { opacity: 0; transform: perspective(700px) rotate(var(--r)) rotateY(85deg) scale(1.1); }
+    40%  { opacity: 1; }
+    100% { opacity: 1; transform: perspective(700px) rotate(var(--r)) rotateY(0) scale(1); }
+  }
+  /* 펄럭 붙기: 윗변을 축으로 아래쪽이 들렸다가 착 붙음 */
+  .sticker.stuck:not(.instant).a-peel { transform-origin: 50% 0; animation: sticker-peel var(--wipe-ms, .7s) cubic-bezier(.3, .9, .4, 1.2) both; }
+  @keyframes sticker-peel {
+    0%   { opacity: 0; transform: perspective(600px) rotate(var(--r)) rotateX(-75deg); }
+    35%  { opacity: 1; }
+    100% { opacity: 1; transform: perspective(600px) rotate(var(--r)) rotateX(0); }
+  }
+  /* 스르륵: 그냥 서서히 */
+  .sticker.stuck:not(.instant).a-fade { animation: sticker-fade var(--wipe-ms, .7s) ease both; }
+  @keyframes sticker-fade {
+    0%   { opacity: 0; transform: rotate(var(--r)) scale(1.06); }
+    100% { opacity: 1; transform: rotate(var(--r)) scale(1); }
   }
 
   /* ---------- Header (GIF · 영상 · 이미지) ---------- */
@@ -253,6 +312,46 @@
   .modal-scroll::-webkit-scrollbar { width: 8px; }
   .modal-scroll::-webkit-scrollbar-track { background: transparent; margin: 18px 0; }
   .modal-scroll::-webkit-scrollbar-thumb { background: var(--scroll-color); border-radius: 99px; border: 2px solid var(--pop-bg, var(--card)); }
+
+  /* ---------- 유리 효과 팝업 (편집기 > 팝업 > 유리 효과) ---------- */
+  .modal.glass { background: rgba(0, 0, 0, var(--modal-dim, .3)); }
+  .modal.glass .modal-panel, .modal.glass.dark .modal-panel {
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: blur(24px) saturate(1.6);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
+    border: 0;
+    box-shadow:
+      0 30px 80px rgba(0, 0, 0, .45),
+      inset 0 0 calc(var(--glass-depth) * 60px) rgba(255, 255, 255, calc(var(--glass-depth) * .18)),
+      inset 0 calc(var(--glass-depth) * -12px) calc(var(--glass-depth) * 30px) rgba(0, 0, 0, calc(var(--glass-depth) * .25));
+  }
+  /* 빛: 빛이 오는 쪽 가장자리가 밝게 빛나는 테두리 */
+  .modal.glass .modal-panel::after {
+    content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 3;
+    padding: var(--glass-bw, 1px);
+    background: linear-gradient(var(--glass-angle, 135deg),
+      rgba(255, 255, 255, var(--glass-light)) 0%, rgba(255, 255, 255, calc(var(--glass-light) * .15)) 35%,
+      rgba(255, 255, 255, calc(var(--glass-light) * .05)) 60%, rgba(255, 255, 255, calc(var(--glass-light) * .6)) 100%);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude;
+  }
+  /* 빛이 비치는 쪽 표면이 살짝 밝게 + 서리 질감(노이즈) */
+  .modal.glass .modal-panel::before {
+    content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 0;
+    background:
+      linear-gradient(var(--glass-angle, 135deg), rgba(255, 255, 255, calc(var(--glass-light) * .12)), transparent 45%),
+      var(--glass-noise-img);
+    background-size: auto, 160px 160px;
+    opacity: 1;
+  }
+  .modal.glass .modal-scroll { position: relative; z-index: 1; transform: translateZ(0); }
+  /* 가벼운 모드(기본): 유리 뒤를 매번 다시 흐리게 하지 않고, 팝업이 열릴 때 뒤 페이지를 한 번만 흐리게 해 둠 */
+  .modal.glass.fast .modal-panel { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+  body.glass-fast.modal-open > :is(.hero, .wrap, .stickers) { filter: var(--glass-page-filter); }
+  .modal.glass .modal-panel::before, .modal.glass .modal-panel::after { will-change: transform; }
+  .modal.glass .modal-close { z-index: 4; }
+  .modal.glass .modal-scroll::-webkit-scrollbar-thumb { border-color: transparent; }
 
   /* ---------- 다크 팝업 (편집기 > 팝업 > 스타일) ----------
      어두운 패널 + 옅은 테두리, 이미지는 테두리 있는 검은 프레임 안, 아래는 꽉 찬 어두운 버튼 */
@@ -605,7 +704,7 @@
 </div>
 
 <!-- 사이트 내용은 data.js에 들어 있습니다. 편집은 admin.html(편집기)에서 하세요. -->
-<script src="data.js?v=20261011201404"></script>
+<script src="data.js?v=20261012234505"></script>
 <script>
 const SOCIAL_ICONS = {
   instagram: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>',
@@ -776,6 +875,10 @@ function layoutStickers() {
   const wipeKeys = WIPES[c.wipeDir] ? [c.wipeDir] : Object.keys(WIPES);
   const wipeRand = seededRandom((c.seed || 1) + 7);   // 배치는 그대로 두고 방향만 따로 섞음
   const wipeMs = Math.max(150, Math.min(3000, Number(c.wipeMs) || 700));
+  /* 등장 애니메이션: 하나로 고정하거나(mix 면) 스티커마다 섞음 */
+  const ANIMS = ["wipe", "slap", "stamp", "pop", "drop", "spin", "flip", "peel", "fade"];
+  const animList = Array.isArray(c.anims) && c.anims.length ? c.anims.filter(a => ANIMS.includes(a)) : [ANIMS.includes(c.anim) ? c.anim : "wipe"];
+  const animRand = seededRandom((c.seed || 1) + 13);
   [box, frontBox].forEach(b => b.style.setProperty("--wipe-ms", wipeMs + "ms"));
 
   let y = startY, k = 0;
@@ -796,6 +899,7 @@ function layoutStickers() {
     Object.assign(img.style, { left: x + "px", top: y + (rand() - .5) * gapY * .5 + "px", width: size + "px" });
     img.style.setProperty("--r", ((rand() * 2 - 1) * rot).toFixed(1) + "deg");
     const [wd, ms, m0, m1] = WIPES[wipeKeys[Math.floor(wipeRand() * wipeKeys.length) % wipeKeys.length]];
+    img.classList.add("a-" + (animList[Math.floor(animRand() * animList.length) % animList.length] || "wipe"));
     img.style.setProperty("--wd", wd); img.style.setProperty("--ms", ms);
     img.style.setProperty("--m0", m0); img.style.setProperty("--m1", m1);
     /* 다 칠해지면 마스크를 걷어냄 */
@@ -1153,6 +1257,114 @@ function ensureAutoplay(v) {
 /* ---------- render page ---------- */
 let SITE_DATA = window.SITE || { profile: {}, links: [] };
 
+/* ---------- 팝업 유리 효과 (편집기 > 팝업 > 유리 효과, 피그마 Glass 와 비슷한 항목) ----------
+   서리(흐림)·색 비침·채도 / 빛 각도·세기(가장자리 하이라이트) / 깊이(안쪽 빛) / 질감(노이즈)
+   굴절·분산: 가장자리에서 뒤 배경이 렌즈처럼 휘어 보이게 (크롬·엣지·삼성 인터넷 등 크로미움 브라우저만, 나머지는 흐림만) */
+/* 서리 질감: 흰 노이즈 (진하기 a) */
+const glassNoise = a => `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 ${(a * 1.6).toFixed(3)} 0'/></filter><rect width='100%' height='100%' filter='url(#n)'/></svg>`)}")`;
+const glassState = { cfg: null, size: "", observer: null };
+const isChromium = !!(window.chrome || /Chrome\/|CriOS|Edg\//.test(navigator.userAgent)) && !/Firefox/.test(navigator.userAgent) && !/iPad|iPhone|iPod/.test(navigator.userAgent);
+function hexToRgb(hex) {
+  let h = String(hex || "").replace("#", "");
+  if (h.length === 3) h = h.split("").map(c => c + c).join("");
+  const n = parseInt(h.slice(0, 6), 16);
+  return isNaN(n) ? [255, 255, 255] : [n >> 16 & 255, n >> 8 & 255, n & 255];
+}
+function applyGlass(g) {
+  const modalEl = document.getElementById("modal");
+  const on = !!(g && g.enabled);
+  glassState.cfg = on ? g : null;
+  modalEl.classList.toggle("glass", on);
+  const fast = on && g.mode !== "real";
+  modalEl.classList.toggle("fast", fast);
+  document.body.classList.toggle("glass-fast", fast);
+  const st = modalEl.style;
+  const props = ["--glass-bg", "--glass-filter", "--glass-angle", "--glass-light", "--glass-bw", "--glass-depth", "--glass-noise-img", "--modal-dim"];
+  if (!on) { props.forEach(k => st.removeProperty(k)); return; }
+  const num = (v, def, min, max) => Math.max(min, Math.min(max, Number(v ?? def)));
+  const [r, gg, b] = hexToRgb(g.tint || "#ffffff");
+  const tint = num(g.tintAlpha, .08, 0, .9);
+  st.setProperty("--glass-bg", `rgba(${r}, ${gg}, ${b}, ${tint})`);
+  st.setProperty("--glass-angle", num(g.angle, 135, 0, 360) + "deg");
+  st.setProperty("--glass-light", num(g.light, .5, 0, 1));
+  st.setProperty("--glass-bw", num(g.border, 1, 0, 4) + "px");
+  st.setProperty("--glass-depth", num(g.depth, .4, 0, 1));
+  const frost = num(g.frost, .05, 0, .5);
+  st.setProperty("--glass-noise-img", frost > 0 ? glassNoise(frost) : "none");
+  st.setProperty("--modal-dim", num(g.dim, .3, 0, .95));
+  glassState.size = "";               // 굴절 지도 다시 만들기
+  if (fast) document.body.style.setProperty("--glass-page-filter", glassFilterValue(false));
+  else document.body.style.removeProperty("--glass-page-filter");
+  updateGlassFilter();
+}
+/* backdrop-filter 값 (굴절이 있으면 SVG 필터를 앞에 붙임) */
+function glassFilterValue(withRefract) {
+  const g = glassState.cfg;
+  const blur = Math.max(0, Math.min(80, Number(g.blur ?? 24)));
+  const sat = Math.max(.5, Math.min(3, Number(g.saturate ?? 1.6)));
+  const bright = Math.max(.5, Math.min(1.5, Number(g.brightness ?? 1)));
+  return `${withRefract ? "url(#glass-refract) " : ""}blur(${blur}px) saturate(${sat}) brightness(${bright})`;
+}
+/* 굴절 지도: 패널 가장자리(폭 w)에서 바깥 방향으로 밀리는 정도를 R(가로)·G(세로)에 담은 그림 */
+function glassMap(W, H, radius, w) {
+  const s = .25, cw = Math.max(2, Math.round(W * s)), ch = Math.max(2, Math.round(H * s));
+  const cv = document.createElement("canvas"); cv.width = cw; cv.height = ch;
+  const ctx = cv.getContext("2d"), img = ctx.createImageData(cw, ch), d = img.data;
+  const hw = W / 2, hh = H / 2, rr = Math.min(radius, hw, hh);
+  for (let y = 0; y < ch; y++) for (let x = 0; x < cw; x++) {
+    const px = (x + .5) / s - hw, py = (y + .5) / s - hh;
+    const qx = Math.abs(px) - (hw - rr), qy = Math.abs(py) - (hh - rr);
+    let dist, nx, ny;                         // dist: 가장자리에서 안쪽으로 떨어진 거리
+    if (qx > 0 && qy > 0) { const l = Math.hypot(qx, qy) || 1; dist = rr - l; nx = qx / l; ny = qy / l; }
+    else if (qx > qy) { dist = rr - qx; nx = 1; ny = 0; }
+    else { dist = rr - qy; nx = 0; ny = 1; }
+    nx *= Math.sign(px) || 1; ny *= Math.sign(py) || 1;
+    const t = dist < w ? Math.pow(1 - Math.max(0, dist) / w, 2) : 0;   // 가장자리일수록 강하게
+    const i = (y * cw + x) * 4;
+    d[i] = 128 + nx * t * 127; d[i + 1] = 128 + ny * t * 127; d[i + 2] = 128; d[i + 3] = 255;
+  }
+  ctx.putImageData(img, 0, 0);
+  return cv.toDataURL();
+}
+function updateGlassFilter() {
+  const g = glassState.cfg, panel = document.querySelector(".modal-panel");
+  if (!g || !panel || g.mode !== "real") return;      // 가벼운 모드는 굴절 없음
+  const strength = Math.max(0, Math.min(150, Number(g.refract ?? 0)));
+  const st = document.getElementById("modal").style;
+  /* 휴대폰은 굴절이 너무 무거워서 흐린 유리로만 */
+  if (!strength || !isChromium || isPhone()) { st.setProperty("--glass-filter", glassFilterValue(false)); return; }
+  const W = Math.round(panel.offsetWidth), H = Math.round(panel.offsetHeight);
+  if (!W || !H) return;
+  const radius = parseFloat(getComputedStyle(panel).borderTopLeftRadius) || 0;
+  const edge = Math.max(4, Math.min(200, Number(g.refractWidth ?? 40)));
+  const disp = Math.max(0, Math.min(1, Number(g.dispersion ?? 0)));
+  const key = [W, H, radius, edge, strength, disp].join();
+  if (key !== glassState.size) {
+    glassState.size = key;
+    const map = glassMap(W, H, radius, edge);
+    /* 분산: 빨강·초록·파랑을 조금씩 다르게 휘게 해서 가장자리에 무지개 번짐 */
+    const ch = (sc, m) => `<feDisplacementMap in="SourceGraphic" in2="map" scale="${sc}" xChannelSelector="R" yChannelSelector="G" result="d${m}"/>
+      <feColorMatrix in="d${m}" type="matrix" values="${m === "r" ? "1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" : m === "g" ? "0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" : "0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0"}" result="c${m}"/>`;
+    const sc = -strength;
+    const body = disp > 0
+      ? ch(sc * (1 + disp * .08), "r") + ch(sc, "g") + ch(sc * (1 - disp * .08), "b") +
+        `<feBlend in="cr" in2="cg" mode="screen" result="rg"/><feBlend in="rg" in2="cb" mode="screen"/>`
+      : `<feDisplacementMap in="SourceGraphic" in2="map" scale="${sc}" xChannelSelector="R" yChannelSelector="G"/>`;
+    let holder = document.getElementById("glass-svg");
+    if (!holder) {
+      holder = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      holder.id = "glass-svg"; holder.setAttribute("width", "0"); holder.setAttribute("height", "0");
+      holder.style.cssText = "position:absolute;width:0;height:0;pointer-events:none";
+      document.body.appendChild(holder);
+    }
+    holder.innerHTML = `<filter id="glass-refract" x="0" y="0" width="${W}" height="${H}" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feImage href="${map}" x="0" y="0" width="${W}" height="${H}" preserveAspectRatio="none" result="map"/>${body}</filter>`;
+  }
+  st.setProperty("--glass-filter", glassFilterValue(true));
+}
+/* 팝업 크기가 바뀌면(창 크기·내용) 굴절 지도도 다시 */
+new ResizeObserver(() => { if (glassState.cfg) updateGlassFilter(); }).observe(document.querySelector(".modal-panel"));
+
 function render(site) {
   SITE_DATA = site;
   const p = site.profile || {};
@@ -1188,6 +1400,7 @@ function render(site) {
   [["--pop-bg", dark ? pop.bg : null], ["--pop-btn-bg", pop.btnBg], ["--pop-btn-text", pop.btnText]]
     .forEach(([k, v]) => okColor(v) ? rootStyle.setProperty(k, v) : rootStyle.removeProperty(k));
   pop.framePad != null ? rootStyle.setProperty("--pop-frame-pad", Number(pop.framePad) + "px") : rootStyle.removeProperty("--pop-frame-pad");
+  applyGlass(pop.glass);
 
   applyCursor((site.theme || {}).cursor);
   scheduleStickers(site.stickers);
@@ -1298,6 +1511,10 @@ function openModal(i, trigger) {
 
   modal.classList.add("open");
   document.body.classList.add("modal-open");
+  /* 팝업 뒤에서 재생 중인 영상(헤더 등)은 잠깐 멈춤: 안 보이는데 계속 그리면 버벅임 (특히 유리 효과) */
+  modal._pausedBg = [...document.querySelectorAll("video")].filter(v => !modal.contains(v) && !v.paused);
+  modal._pausedBg.forEach(v => v.pause());
+  if (glassState.cfg) requestAnimationFrame(updateGlassFilter);
   if (trigger) {
     document.getElementById("modal-scroll").scrollTop = 0;
     document.getElementById("modal-close").focus();
@@ -1310,6 +1527,8 @@ function openModal(i, trigger) {
 function closeModal() {
   modal.classList.remove("open");
   document.body.classList.remove("modal-open");
+  (modal._pausedBg || []).forEach(v => v.play().catch(() => {}));
+  modal._pausedBg = [];
   post.querySelectorAll("video").forEach(v => v.pause());
   setTimeout(() => { if (!modal.classList.contains("open")) post.innerHTML = ""; forgetGoneMedia(); }, 300);
   if (lastFocus) lastFocus.focus();

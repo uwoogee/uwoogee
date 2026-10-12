@@ -340,7 +340,21 @@ window.SITE = {
       "width": 1600,
       "closeX": 35,
       "closeBg": "#454545",
-      "closeSize": 36
+      "closeSize": 36,
+      "glass": {
+        "blur": 19,
+        "tintAlpha": 0.42,
+        "light": 0.6,
+        "depth": 0.3,
+        "frost": 0.03,
+        "refract": 40,
+        "refractWidth": 40,
+        "dispersion": 0.3,
+        "saturate": 1.3,
+        "enabled": true,
+        "tint": "#000000",
+        "dim": 0.35
+      }
     },
     "cursor": {
       "pointer": "uploads/20261010-090826-hand.png",
@@ -443,7 +457,10 @@ window.SITE = {
     "interval": 120,
     "sizeVary": 0.4,
     "density": 4,
-    "wipeMs": 200
+    "wipeMs": 550,
+    "anims": [
+      "pop"
+    ]
   },
   "mainMusic": {
     "src": "uploads/20261011-162514-file.mp3",
