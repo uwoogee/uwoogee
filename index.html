@@ -83,6 +83,21 @@
   /* 붙는 애니메이션 (편집기 > 스티커 > 등장 애니메이션). 속도는 모두 --wipe-ms 기준 */
   .sticker.stuck { opacity: 1; }
   .sticker.instant { opacity: 1; -webkit-mask: none; mask: none; animation: none; }
+  /* 붙은 스티커는 잡아서 옮길 수 있음 (팝업이 떠 있으면 못 만짐) */
+  .sticker.stuck, .sticker.instant { pointer-events: auto; cursor: grab; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  body.modal-open .sticker { pointer-events: none !important; }
+  .sticker.dragging {
+    cursor: grabbing; z-index: 10;
+    transform: rotate(var(--r)) scale(1.08) !important;
+    filter: drop-shadow(0 16px 18px rgba(0, 0, 0, .5));
+  }
+  /* 놓으면 '착' 다시 붙는 느낌 */
+  .sticker.dropped { animation: sticker-restick .28s cubic-bezier(.3, 1.5, .5, 1); }
+  @keyframes sticker-restick {
+    0%   { transform: rotate(var(--r)) scale(1.08); }
+    55%  { transform: rotate(var(--r)) scale(.96); }
+    100% { transform: rotate(var(--r)) scale(1); }
+  }
   /* 칠하기: 부드러운 경계선이 한쪽 끝에서 반대쪽으로 지나가며 드러남 (방향은 스티커마다 --wd 등으로) */
   .sticker.stuck:not(.instant).a-wipe {
     --wipe: linear-gradient(var(--wd, to right), #000 42%, rgba(0, 0, 0, .75) 48%, rgba(0, 0, 0, .3) 54%, transparent 58%);
@@ -704,7 +719,7 @@
 </div>
 
 <!-- 사이트 내용은 data.js에 들어 있습니다. 편집은 admin.html(편집기)에서 하세요. -->
-<script src="data.js?v=20261012234505"></script>
+<script src="data.js?v=20261013000004"></script>
 <script>
 const SOCIAL_ICONS = {
   instagram: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>',
@@ -961,6 +976,132 @@ window.addEventListener("resize", () => scheduleStickers(stickerState.cfg));
 window.addEventListener("load", () => scheduleStickers(stickerState.cfg));
 new ResizeObserver(() => scheduleStickers(stickerState.cfg)).observe(document.body);
 
+/* ---------- 붙은 스티커를 잡아서 옮기거나 휙 던져서 치우기 ----------
+   PC: 마우스로 바로 잡기 / 휴대폰: 꾹 누르고 있으면(0.35초) 잡힘 → 그냥 스와이프는 평소처럼 스크롤
+   잡지 않고 그냥 누르기만 하면 그 아래 카드·링크가 눌림. 팝업·진입 화면이 떠 있으면 못 만짐 */
+const stickerDrag = { el: null, sx: 0, sy: 0, left: 0, top: 0, moved: false, hist: [], timer: 0 };
+/* 스티커를 잡고 있는 동안은 페이지가 스크롤되지 않게 (휠·키보드·터치 모두) */
+const SCROLL_KEYS = new Set([" ", "PageUp", "PageDown", "Home", "End", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"]);
+function blockScroll(e) {
+  if (!stickerDrag.el) return;
+  if (e.type === "keydown" && !SCROLL_KEYS.has(e.key)) return;
+  e.preventDefault();
+  if (e.type !== "touchmove") e.stopImmediatePropagation();   // 터치 이동은 스티커 옮기는 데 써야 하니 막지 않음
+}
+["wheel", "touchmove", "keydown"].forEach(t => window.addEventListener(t, blockScroll, { passive: false, capture: true }));
+function canTouchStickers() {
+  return !document.body.classList.contains("modal-open") && intro.hidden;
+}
+function pickSticker(el, pageX, pageY) {
+  stickerDrag.el = el;
+  stickerDrag.sx = pageX; stickerDrag.sy = pageY;
+  stickerDrag.left = parseFloat(el.style.left); stickerDrag.top = parseFloat(el.style.top);
+  stickerDrag.moved = false; stickerDrag.hist = [{ x: pageX, y: pageY, t: performance.now() }];
+  cancelAnimationFrame(el._glide);
+  el.getAnimations().forEach(a => a.finish());           // 나타나는 중이면 바로 끝까지
+  el.classList.add("instant", "dragging");
+  el.classList.remove("dropped");
+  /* 잡는 동안은 카드 위로 올라오게, 놓은 뒤에도 위 층에 남음 */
+  const front = document.getElementById("stickers-front");
+  if (el.parentElement !== front) front.appendChild(el);
+}
+function moveSticker(pageX, pageY) {
+  const d = stickerDrag, el = d.el;
+  const dx = pageX - d.sx, dy = pageY - d.sy;
+  if (!d.moved && Math.hypot(dx, dy) < 4) return;
+  d.moved = true;
+  el.style.left = d.left + dx + "px";
+  el.style.top = d.top + dy + "px";
+  const now = performance.now();
+  d.hist.push({ x: pageX, y: pageY, t: now });
+  while (d.hist.length > 2 && now - d.hist[0].t > 90) d.hist.shift();
+}
+function dropSticker() {
+  const d = stickerDrag, el = d.el;
+  if (!el) return;
+  d.el = null;
+  el.classList.remove("dragging");
+  /* 던진 속도 (px/ms) */
+  const a = d.hist[0], b = d.hist[d.hist.length - 1], dt = Math.max(1, b.t - a.t);
+  let vx = (b.x - a.x) / dt, vy = (b.y - a.y) / dt;
+  if (performance.now() - b.t > 80 || Math.hypot(vx, vy) < .5) { vx = vy = 0; }
+  if (!vx && !vy) { el.classList.add("dropped"); return; }
+  /* 미끄러지다 멈춤. 화면 밖으로 날아가면 치워짐 */
+  let last = performance.now();
+  const glide = now => {
+    const step = Math.min(40, now - last); last = now;
+    const left = parseFloat(el.style.left) + vx * step, top = parseFloat(el.style.top) + vy * step;
+    el.style.left = left + "px"; el.style.top = top + "px";
+    const f = Math.pow(.94, step / 16); vx *= f; vy *= f;
+    const w = el.offsetWidth, vw = document.documentElement.clientWidth;
+    const docH = el.parentElement.offsetHeight;
+    if (left > vw + 10 || left + w < -10 || top + w < -10 || top > docH + 10) { el.remove(); return; }
+    if (Math.hypot(vx, vy) > .03) el._glide = requestAnimationFrame(glide);
+    else el.classList.add("dropped");
+  };
+  el._glide = requestAnimationFrame(glide);
+}
+/* 잡지 않고 그냥 눌렀으면: 스티커 아래에 있는 것(카드·링크)을 대신 눌러줌 */
+function clickUnderSticker(x, y) {
+  const all = [...document.querySelectorAll(".sticker")];
+  all.forEach(s => s.style.pointerEvents = "none");
+  const under = document.elementFromPoint(x, y);
+  all.forEach(s => s.style.pointerEvents = "");
+  if (under && under.click) under.click();
+}
+/* PC (마우스·펜) */
+document.addEventListener("pointerdown", e => {
+  if (e.pointerType === "touch" || e.button !== 0) return;
+  const el = e.target.closest && e.target.closest(".sticker");
+  if (!el || !canTouchStickers()) return;
+  e.preventDefault();
+  pickSticker(el, e.pageX, e.pageY);
+  const move = ev => moveSticker(ev.pageX, ev.pageY);
+  const up = ev => {
+    document.removeEventListener("pointermove", move);
+    document.removeEventListener("pointerup", up);
+    document.removeEventListener("pointercancel", up);
+    const clicked = !stickerDrag.moved;
+    dropSticker();
+    if (clicked && ev.type === "pointerup") clickUnderSticker(ev.clientX, ev.clientY);
+  };
+  document.addEventListener("pointermove", move);
+  document.addEventListener("pointerup", up);
+  document.addEventListener("pointercancel", up);
+});
+/* 휴대폰 (꾹 눌러서 잡기) */
+document.addEventListener("touchstart", e => {
+  const el = e.target.closest && e.target.closest(".sticker");
+  if (!el || e.touches.length !== 1 || !canTouchStickers()) return;
+  const t0 = e.touches[0], start = { x: t0.clientX, y: t0.clientY };
+  let held = false;
+  const cancel = () => { clearTimeout(stickerDrag.timer); cleanup(); };
+  const onMove = ev => {
+    const t = ev.touches[0];
+    if (!held) { if (Math.hypot(t.clientX - start.x, t.clientY - start.y) > 10) cancel(); return; }
+    moveSticker(t.pageX, t.pageY);                          // (스크롤은 blockScroll 이 막음)
+  };
+  const onEnd = ev => {
+    clearTimeout(stickerDrag.timer);
+    if (held) dropSticker();
+    else if (ev.type === "touchend") { ev.preventDefault(); clickUnderSticker(start.x, start.y); }   // 그냥 톡 누름 → 아래 카드 누르기
+    cleanup();
+  };
+  const cleanup = () => {
+    document.removeEventListener("touchmove", onMove);
+    document.removeEventListener("touchend", onEnd);
+    document.removeEventListener("touchcancel", onEnd);
+  };
+  document.addEventListener("touchmove", onMove, { passive: false });
+  document.addEventListener("touchend", onEnd);
+  document.addEventListener("touchcancel", onEnd);
+  stickerDrag.timer = setTimeout(() => {
+    held = true;
+    pickSticker(el, t0.pageX, t0.pageY);
+    if (navigator.vibrate) navigator.vibrate(15);
+  }, 350);
+}, { passive: true });
+
 /* ---------- 클릭하면 픽셀 별이 팡! (편집기 > 커서 > 클릭 효과) ---------- */
 const PIXEL_STARS = [
   ["..#..", ".###.", "#####", ".###.", ".#.#."],      // 별
@@ -1108,7 +1249,7 @@ function applyCursor(c) {
     const at = `${Math.round(hot[0])} ${Math.round(hot[1])}`;
     el.textContent =
       `html, body, body * { cursor: url("${n}") ${at}, auto; }` +
-      `a, a *, button, button *, summary, label, .card-link, .modal-close, input[type=range], [role=button] ` +
+      `a, a *, button, button *, summary, label, .card-link, .modal-close, input[type=range], [role=button], .sticker.stuck, .sticker.instant ` +
       `{ cursor: url("${ptr || n}") ${at}, pointer; }`;
   });
 }
@@ -1634,7 +1775,7 @@ smoothScroll({
   scroller: document.scrollingElement || document.documentElement,
   host: window,
   active: () => !modal.classList.contains("open"),
-  noDrag: "video, iframe, input, textarea, .modal"
+  noDrag: "video, iframe, input, textarea, .modal, .sticker.stuck, .sticker.instant"   // 스티커를 잡으면 페이지 대신 스티커가 움직임
 });
 modal.addEventListener("click", e => { if (e.target === modal) closeModal(); });
 document.addEventListener("keydown", e => {
