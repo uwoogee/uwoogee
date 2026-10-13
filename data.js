@@ -122,6 +122,42 @@ window.SITE = {
       "date": "2025.10 - 2026.01"
     },
     {
+      "title": "DUNGEON & FIGHTER MOBILE",
+      "sub": ": RE-DESIGN",
+      "url": "",
+      "thumb": "uploads/20261014-033154-sdffsdf.jpg",
+      "desc": "던전앤파이터 모바일의 기존 디자인을 새로운 콘셉트로 재해석한 UI/UX 디자인입니다.",
+      "post": [
+        {
+          "type": "image",
+          "src": "uploads/20261014-030123-file.jpg"
+        },
+        {
+          "type": "youtube",
+          "src": "https://youtube.com/shorts/EAR9lfg-Sxg?feature=share"
+        },
+        {
+          "type": "image",
+          "src": "uploads/20261014-032149-3.webp"
+        },
+        {
+          "type": "image",
+          "src": "uploads/20261014-032828-6.webp"
+        },
+        {
+          "type": "image",
+          "src": "uploads/20261014-032004-4.webp"
+        },
+        {
+          "type": "image",
+          "src": "uploads/20261014-032245-5.jpg"
+        }
+      ],
+      "hoverColor": "#99b649",
+      "contribution": "UI/UX 100%",
+      "date": "26.09.18 - 26.09.24 (7일)"
+    },
+    {
       "title": "VERTICAL SUBCULTURE",
       "sub": "#VERTICAL #DARK #MOBILE",
       "icon": "star",
@@ -310,9 +346,9 @@ window.SITE = {
       },
       "postDesc": {
         "size": 20,
-        "weight": 500,
+        "weight": 600,
         "spacing": -0.02,
-        "color": "#9a9a9a"
+        "color": "#cfcfcf"
       },
       "postText": {
         "color": "#b5b5b5"
@@ -325,16 +361,21 @@ window.SITE = {
         "size": 22,
         "weight": 900,
         "spacing": 0.02
+      },
+      "postMeta": {
+        "size": 20,
+        "color": "#ffffff",
+        "weight": 700
       }
     },
     "popup": {
       "gap": 52,
       "closeColor": "#b0b0b0",
       "scrollColor": "#3d3d3d",
-      "top": 90,
-      "titleGap": 22,
-      "contentGap": 72,
-      "textLine": 1.95,
+      "top": 106,
+      "titleGap": 35,
+      "contentGap": 106,
+      "textLine": 1.3,
       "descLine": 1.85,
       "bg": "#242628",
       "width": 1600,
@@ -342,7 +383,7 @@ window.SITE = {
       "closeBg": "#454545",
       "closeSize": 36,
       "glass": {
-        "blur": 19,
+        "blur": 44,
         "tintAlpha": 0.42,
         "light": 0.6,
         "depth": 0.3,
@@ -354,7 +395,9 @@ window.SITE = {
         "enabled": true,
         "tint": "#000000",
         "dim": 0.35
-      }
+      },
+      "bottom": 100,
+      "metaGap": 55
     },
     "cursor": {
       "pointer": "uploads/20261010-090826-hand.png",
@@ -427,7 +470,16 @@ window.SITE = {
     "dotTwinkleSpeed": 0.4,
     "dotLayout": "random",
     "dotJitter": 0.65,
-    "startColor": "#b3b3b3"
+    "startColor": "#b3b3b3",
+    "sfx": {
+      "start": {
+        "preset": "blip"
+      },
+      "open": {
+        "preset": "bell",
+        "enabled": false
+      }
+    }
   },
   "stickers": {
     "images": [

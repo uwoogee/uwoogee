@@ -328,6 +328,36 @@
   .modal-scroll::-webkit-scrollbar-track { background: transparent; margin: 18px 0; }
   .modal-scroll::-webkit-scrollbar-thumb { background: var(--scroll-color); border-radius: 99px; border: 2px solid var(--pop-bg, var(--card)); }
 
+  /* ---------- PC 팝업 옆 도구: 축소 · 확대 · 맨 위로 (스크롤해도 제자리) ---------- */
+  /* 배율: 내용 폭을 원래 폭(px)으로 고정하고 통째로 줄이고/키움 → 이미지까지 같이 작아지고 커짐 */
+  .modal.zoom-any .modal-scroll > * { zoom: var(--pop-zoom, 1); width: var(--pop-inner-w, auto); box-sizing: border-box; margin-left: auto; margin-right: auto; }
+  .modal.zoomed .modal-scroll { overflow-x: auto; }
+  .pop-tools {
+    position: fixed; z-index: 3; display: flex; flex-direction: column; align-items: center; gap: 2px;
+    padding: 6px; border-radius: 16px;
+    background: rgba(18, 18, 20, .72); border: 1px solid rgba(255, 255, 255, .1);
+    -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, .35);
+    color: #fff; font: 600 11px/1 var(--font, sans-serif);
+    opacity: 0; transition: opacity .2s;
+  }
+  .modal.open .pop-tools.ready { opacity: 1; }
+  .pop-tools button {
+    width: 38px; height: 38px; display: grid; place-items: center;
+    border: 0; border-radius: 11px; background: transparent; color: inherit; cursor: pointer;
+  }
+  .pop-tools button:hover { background: rgba(255, 255, 255, .12); }
+  .pop-tools button:disabled { opacity: .3; cursor: default; background: transparent; }
+  .pop-tools svg { width: 18px; height: 18px; }
+  .pop-tools .pop-zoom-label { width: 44px; height: 26px; font-size: 11px; letter-spacing: .02em; border-radius: 8px; }
+  .pop-tools hr { width: 22px; border: 0; border-top: 1px solid rgba(255, 255, 255, .15); margin: 4px 0; }
+  .pop-tools[hidden] { display: none; }
+  @media (max-width: 900px), (hover: none) { .pop-tools { display: none !important; } }
+  /* 도구가 있으면 팝업 오른쪽에 도구 자리를 남겨둠 (팝업이 화면을 거의 꽉 채울 때) */
+  @media (min-width: 901px) and (hover: hover) {
+    .modal.has-tools .modal-panel { width: min(var(--modal-width, 1400px), calc(94vw - 120px)); }
+  }
+
   /* ---------- 유리 효과 팝업 (편집기 > 팝업 > 유리 효과) ---------- */
   .modal.glass { background: rgba(0, 0, 0, var(--modal-dim, .3)); }
   .modal.glass .modal-panel, .modal.glass.dark .modal-panel {
@@ -414,7 +444,7 @@
   .modal-meta {
     display: flex; flex-wrap: wrap; gap: 8px 28px;
     justify-content: var(--pop-justify, center);
-    margin-top: 18px;
+    margin-top: var(--pop-meta-gap, 18px);   /* 편집기 > 팝업 > 안쪽 간격 */
   }
   .modal-meta:empty { display: none; }
   .modal-meta div { display: flex; gap: 10px; align-items: baseline; }
@@ -430,6 +460,9 @@
     display: block; width: 100%; border-radius: 10px; background: #f2f2f6;
   }
   .post img, .post video { height: auto; }
+  /* 세로 영상 (편집기 > 팝업 > 세로 영상 최대 높이) */
+  .post figure.portrait video { width: auto; max-width: 100%; max-height: var(--pop-portrait-h, 80vh); margin: 0 auto; }
+  .post figure.portrait .embed { width: auto; max-width: 100%; height: var(--pop-portrait-h, 80vh); aspect-ratio: 9 / 16; margin: 0 auto; }
   .post .ph-media { aspect-ratio: 16 / 9; display: grid; place-items: center; color: #fff; font-size: 14px; letter-spacing: .1em; }
   .post .embed { aspect-ratio: 16 / 9; border: 0; }
   .post figcaption { text-align: center; margin-top: 8px; font-size: 12px; color: var(--text-sub); }
@@ -585,7 +618,7 @@
   /* START 에 마우스를 올리면: 깜빡임 멈춤 + 색 바뀜 (▶ 도 같은 색) */
   .intro-start { transition: color .15s; }
   .intro-start:hover, .intro-start:focus-visible {
-    animation: none; outline: none;
+    outline: none;
     color: var(--intro-start-hover, #ec8fb0);
   }
   /* 마우스를 올리면 왼쪽에 ▶ */
@@ -719,7 +752,7 @@
 </div>
 
 <!-- 사이트 내용은 data.js에 들어 있습니다. 편집은 admin.html(편집기)에서 하세요. -->
-<script src="data.js?v=20261013020039"></script>
+<script src="data.js?v=20261014035118"></script>
 <script>
 const SOCIAL_ICONS = {
   instagram: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>',
@@ -823,6 +856,14 @@ function renderBlock(raw, i, j) {
     media = `<img src="${esc(b.src)}" alt="${esc(b.caption || "")}" loading="lazy" decoding="async" draggable="false">`;
   }
   f.innerHTML = media + (b.caption ? `<figcaption>${esc(b.caption)}</figcaption>` : "");
+  /* 세로로 긴 영상: 화면을 꽉 채우지 않게 높이를 제한하고 가운데 정렬 (양옆은 여백) */
+  const v = f.querySelector("video");
+  if (v) {
+    const check = () => f.classList.toggle("portrait", v.videoHeight > v.videoWidth * 1.05);
+    v.addEventListener("loadedmetadata", check);
+    if (v.readyState >= 1) check();
+  }
+  if (b.type === "youtube" && /\/shorts\//.test(b.src || "")) f.classList.add("portrait");   // 유튜브 쇼츠
   return f;
 }
 
@@ -1525,7 +1566,7 @@ function render(site) {
   const okColor = c => /^#[0-9a-f]{3,8}$/i.test(c || "");
   [["--close-color", pop.closeColor], ["--close-bg", pop.closeBg], ["--close-bg-custom", pop.closeBg], ["--scroll-color", pop.scrollColor]]
     .forEach(([k, v]) => okColor(v) ? rootStyle.setProperty(k, v) : rootStyle.removeProperty(k));
-  const POP_VARS = { closeSize: ["--close-size", "px"], closeX: ["--close-x", "px"], width: ["--modal-width", "px"], gap: ["--modal-gap", "px"], top: ["--pop-top", "px"], titleGap: ["--pop-title-gap", "px"],
+  const POP_VARS = { closeSize: ["--close-size", "px"], closeX: ["--close-x", "px"], width: ["--modal-width", "px"], gap: ["--modal-gap", "px"], top: ["--pop-top", "px"], titleGap: ["--pop-title-gap", "px"], metaGap: ["--pop-meta-gap", "px"], portraitH: ["--pop-portrait-h", "vh"],
     contentGap: ["--pop-content-gap", "px"], blockGap: ["--pop-block-gap", "px"], bottom: ["--pop-bottom", "px"],
     descLine: ["--pop-desc-line", ""], textLine: ["--pop-text-line", ""] };
   for (const [key, [cssVar, unit]] of Object.entries(POP_VARS))
@@ -1542,6 +1583,9 @@ function render(site) {
     .forEach(([k, v]) => okColor(v) ? rootStyle.setProperty(k, v) : rootStyle.removeProperty(k));
   pop.framePad != null ? rootStyle.setProperty("--pop-frame-pad", Number(pop.framePad) + "px") : rootStyle.removeProperty("--pop-frame-pad");
   applyGlass(pop.glass);
+  window.popToolsOff = pop.tools === false;        // PC 팝업 옆 확대·축소 도구 (편집기 > 팝업)
+  modalEl.classList.toggle("has-tools", pop.tools !== false);
+  if (typeof placePopTools === "function") try { placePopTools(); } catch {}
 
   applyCursor((site.theme || {}).cursor);
   scheduleStickers(site.stickers);
@@ -1656,6 +1700,8 @@ function openModal(i, trigger) {
   modal._pausedBg = [...document.querySelectorAll("video")].filter(v => !modal.contains(v) && !v.paused);
   modal._pausedBg.forEach(v => v.pause());
   if (glassState.cfg) requestAnimationFrame(updateGlassFilter);
+  setTimeout(() => { setPopZoom(popZoom); placePopTools(); }, 320);   // 팝업이 다 열린 뒤 배율·위치 잡기
+  updatePopTop();
   if (trigger) {
     document.getElementById("modal-scroll").scrollTop = 0;
     document.getElementById("modal-close").focus();
@@ -1778,6 +1824,79 @@ smoothScroll({
   noDrag: "video, iframe, input, textarea, .modal, .sticker.stuck, .sticker.instant"   // 스티커를 잡으면 페이지 대신 스티커가 움직임
 });
 modal.addEventListener("click", e => { if (e.target === modal) closeModal(); });
+
+/* ---------- PC: 팝업 옆 도구 (축소 · 배율 · 확대 · 맨 위로) ---------- */
+const POP_ZOOMS = [.5, .67, .75, .85, 1, 1.15, 1.3, 1.5, 1.75, 2];
+const popTools = document.createElement("div");
+popTools.className = "pop-tools";
+popTools.innerHTML = `
+  <button type="button" data-act="in" title="확대" aria-label="확대"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+  <button type="button" data-act="reset" class="pop-zoom-label" title="원래 크기로" aria-label="원래 크기로">100%</button>
+  <button type="button" data-act="out" title="축소" aria-label="축소"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14"/></svg></button>
+  <hr>
+  <button type="button" data-act="top" title="맨 위로" aria-label="맨 위로"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V6M6 11l6-6 6 6"/><path d="M5 3h14"/></svg></button>`;
+modal.appendChild(popTools);
+const popScroll = document.getElementById("modal-scroll");
+let popZoom = 1;
+try { popZoom = Number(sessionStorage.getItem("popZoom")) || 1; } catch {}
+function setPopZoom(z) {
+  /* 보던 위치를 유지하며 배율 바꾸기 */
+  const ratio = popScroll.scrollTop / Math.max(1, popScroll.scrollHeight - popScroll.clientHeight);
+  popZoom = Math.max(POP_ZOOMS[0], Math.min(POP_ZOOMS[POP_ZOOMS.length - 1], z));
+  modal.style.setProperty("--pop-zoom", popZoom);
+  modal.style.setProperty("--pop-inner-w", popScroll.clientWidth + "px");
+  modal.classList.toggle("zoom-any", popZoom !== 1);
+  modal.classList.toggle("zoomed", popZoom > 1);
+  try { sessionStorage.setItem("popZoom", popZoom); } catch {}
+  popTools.querySelector(".pop-zoom-label").textContent = Math.round(popZoom * 100) + "%";
+  popTools.querySelector('[data-act="in"]').disabled = popZoom >= POP_ZOOMS[POP_ZOOMS.length - 1];
+  popTools.querySelector('[data-act="out"]').disabled = popZoom <= POP_ZOOMS[0];
+  popScroll.scrollTop = ratio * Math.max(0, popScroll.scrollHeight - popScroll.clientHeight);
+  updatePopTop();
+}
+function stepPopZoom(dir) {
+  const i = POP_ZOOMS.findIndex(z => z >= popZoom - .001);
+  setPopZoom(POP_ZOOMS[Math.max(0, Math.min(POP_ZOOMS.length - 1, (i < 0 ? POP_ZOOMS.length - 1 : i) + dir))]);
+}
+/* 맨 위로: 부드럽게 올라감 */
+function popScrollTop() {
+  const from = popScroll.scrollTop, t0 = performance.now(), ms = Math.min(700, 250 + from / 8);
+  const step = now => {
+    const k = Math.min(1, (now - t0) / ms), e = 1 - Math.pow(1 - k, 3);
+    popScroll.scrollTop = from * (1 - e);
+    if (k < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+const updatePopTop = () => { popTools.querySelector('[data-act="top"]').disabled = popScroll.scrollTop < 40; };
+popScroll.addEventListener("scroll", updatePopTop, { passive: true });
+popTools.addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  const act = b.dataset.act;
+  if (act === "in") stepPopZoom(1);
+  else if (act === "out") stepPopZoom(-1);
+  else if (act === "reset") setPopZoom(1);
+  else if (act === "top") popScrollTop();
+});
+/* 팝업 오른쪽 바깥에 붙임 (자리가 없으면 팝업 안쪽 오른쪽 가장자리) */
+function placePopTools() {
+  const off = window.popToolsOff === true;
+  popTools.hidden = off;
+  modal.classList.toggle("has-tools", !off);
+  if (off || !modal.classList.contains("open")) return;
+  const r = document.querySelector(".modal-panel").getBoundingClientRect();
+  const w = popTools.offsetWidth || 52, vw = document.documentElement.clientWidth;
+  const left = vw - r.right >= w + 24 ? r.right + 12 : r.right - w - 14;
+  popTools.style.left = Math.round(left) + "px";
+  popTools.style.top = Math.round(r.top + r.height / 2 - popTools.offsetHeight / 2) + "px";
+  popTools.classList.add("ready");
+}
+new ResizeObserver(() => {
+  if (popScroll.clientWidth) modal.style.setProperty("--pop-inner-w", popScroll.clientWidth + "px");
+  placePopTools();
+}).observe(document.querySelector(".modal-panel"));
+window.addEventListener("resize", placePopTools);
+setPopZoom(popZoom);
 document.addEventListener("keydown", e => {
   if (e.key === "Escape" && modal.classList.contains("open")) closeModal();
 });
@@ -1978,6 +2097,69 @@ const pixelHandSVG = () => {
    ③ 가운데에서 원이 커지며 홈페이지가 드러남 (OPEN_MS)
    onClosed: 완전히 까매졌을 때 / onOpen: 다시 열리기 시작할 때 */
 const IRIS_CLOSE_MS = 800, IRIS_OPEN_MS = 900;
+/* ---------- 효과음 (진입 화면 START · 트랜지션 열릴 때) ----------
+   기본 소리는 파일 없이 브라우저에서 바로 만들어 냄(레트로 게임 소리). 내 파일을 올리면 그 파일로.
+   아이폰은 무음 모드면 안 남 (Web Audio 는 기기 무음 설정을 따름) */
+const SFX_PRESETS = {
+  /* [주파수(Hz), 시작(초), 길이(초), 파형] */
+  ding:    [[988, 0, .09, "square"], [1319, .08, .5, "square"]],                       // 띠롱 (동전)
+  bell:    [[1047, 0, .6, "triangle"], [1568, .09, .8, "triangle"]],                   // 맑은 종
+  powerup: [[523, 0, .08, "square"], [659, .07, .08, "square"], [784, .14, .08, "square"], [1047, .21, .4, "square"]],
+  sparkle: [[1760, 0, .14, "triangle"], [2093, .06, .14, "triangle"], [2637, .12, .35, "triangle"]],
+  blip:    [[660, 0, .06, "square"], [990, .05, .16, "square"]],
+};
+let sfxCtx = null;
+const sfxBuffers = new Map();
+function sfxContext() {
+  if (typeof sharedAudioCtx !== "undefined" && sharedAudioCtx) return sharedAudioCtx;
+  const C = window.AudioContext || window.webkitAudioContext;
+  if (!C) return null;
+  return (sfxCtx ||= new C());
+}
+/* 효과음 파일을 미리 받아서 풀어둠 (누르자마자 나도록) */
+function preloadSfx(s) {
+  const ctx = sfxContext();
+  if (!ctx || !s || !s.src || sfxBuffers.has(s.src)) return;
+  sfxBuffers.set(s.src, fetch(s.src).then(r => r.arrayBuffer())
+    .then(b => new Promise((ok, no) => ctx.decodeAudioData(b, ok, no))).catch(() => null));
+}
+function playSfx(s) {
+  if (!s || s.enabled === false) return;
+  if (typeof sfxBlocked === "function" && sfxBlocked()) return;      // 방문자가 소리를 꺼 두었으면 안 냄
+  const ctx = sfxContext();
+  if (!ctx) return;
+  if (ctx.state !== "running") ctx.resume().catch(() => {});
+  const vol = Math.max(0, Math.min(1, Number(s.volume ?? .5)));
+  const out = ctx.createGain(); out.gain.value = vol; out.connect(ctx.destination);
+  if (s.src) {
+    preloadSfx(s);
+    sfxBuffers.get(s.src).then(buf => {
+      if (!buf) return;
+      const src = ctx.createBufferSource(); src.buffer = buf; src.connect(out); src.start();
+    });
+    return;
+  }
+  const notes = SFX_PRESETS[s.preset] || SFX_PRESETS.ding;
+  const soft = ctx.createBiquadFilter(); soft.type = "lowpass"; soft.frequency.value = 5000; soft.connect(out);
+  const t0 = ctx.currentTime + .01;
+  notes.forEach(([f, at, len, wave]) => {
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = wave; o.frequency.value = f;
+    const peak = wave === "square" ? .22 : .5;            // 네모파는 소리가 커서 줄임
+    g.gain.setValueAtTime(0, t0 + at);
+    g.gain.linearRampToValueAtTime(peak, t0 + at + .005);
+    g.gain.exponentialRampToValueAtTime(.0008, t0 + at + len);
+    o.connect(g).connect(soft);
+    o.start(t0 + at); o.stop(t0 + at + len + .02);
+  });
+}
+/* 진입 화면 효과음 설정 (기본: 둘 다 '띠롱') */
+const introSfx = (c, key) => ({ enabled: true, preset: "ding", ...(((c || {}).sfx || {})[key] || {}) });
+/* 방문자가 음악 버튼으로 소리를 꺼 두었으면 효과음도 안 냄 */
+function sfxBlocked() {
+  return [introMusic.bgm, mainMusic.bgm].some(b => b && !b.stopped && b.audio.muted);
+}
+
 function playIris(c, { onClosed, onOpen } = {}) {
   const t = c.transition || {};
   const layer = document.createElement("div");
@@ -2221,15 +2403,20 @@ function showIntro(c, onStart) {
   intro.classList.remove("leaving");
   intro.hidden = false;
   setupIntroMusic(c.music);
+  ["start", "open"].forEach(k => preloadSfx(introSfx(c, k)));
   /* 실제 방문일 때만 페이드인 (편집기 미리보기에서 설정 바꿀 때마다 깜빡이지 않게) */
   if (onStart) {
     [...intro.children].forEach((el, i) => el.style.setProperty("--i", i));
     intro.classList.add("entering");
+    /* 다 나타나면 페이드인 표시를 떼서, 이후 어떤 경우에도 다시 재생되지 않게 */
+    clearTimeout(intro._enterDone);
+    intro._enterDone = setTimeout(() => intro.classList.remove("entering"), (0.15 + intro.children.length * 0.15 + 1.1) * 1000);
     const ui = introMusic.bgm && introMusic.bgm.ui;
     if (ui) { ui.classList.add("fade-in"); ui.addEventListener("animationend", () => ui.classList.remove("fade-in"), { once: true }); }
   } else intro.classList.remove("entering");
   if (introKeyHandler) document.removeEventListener("keydown", introKeyHandler);
   const start = () => {
+    playSfx(introSfx(c, "start"));                       // 띠롱!
     document.removeEventListener("keydown", onKey);
     introKeyHandler = null;
     /* 음악: 기본은 START 와 함께 서서히 꺼짐 / '계속 재생' 이면 메인에서도 계속 (조절 버튼도 남음) */
@@ -2240,12 +2427,13 @@ function showIntro(c, onStart) {
       /* 트랜지션을 끈 경우: 진입 화면이 서서히 사라짐 */
       intro.classList.add("leaving");
       setTimeout(() => { intro.hidden = true; intro.classList.remove("leaving"); }, 650);
+      setTimeout(() => playSfx(introSfx(c, "open")), 450);
       onStart && onStart();
       return;
     }
     playIris(c, {
       onClosed: () => { intro.hidden = true; },        // 완전히 까매지면 진입 화면 치우기
-      onOpen: () => { onStart && onStart(); }          // 원이 열리기 시작할 때 홈페이지 등장
+      onOpen: () => { playSfx(introSfx(c, "open")); onStart && onStart(); }   // 원이 열리기 시작할 때 띠롱 + 홈페이지 등장
     });
   };
   const onKey = e => {
