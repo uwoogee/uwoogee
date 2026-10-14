@@ -646,6 +646,9 @@
   .intro-logo-wrap { position: relative; }
   /* 별이 붙은 로고는 별이 화면 밖으로 잘리지 않게 조금 더 좁게 */
   .intro-logo-wrap:has(.intro-star) img { max-width: 72vw; }
+  /* 모니터 안에서는 화면 폭 기준 제한 없이 원래 비율 그대로 → 전체를 한꺼번에 화면에 맞춤 */
+  .intro.in-frame img, .intro.in-frame .intro-logo-wrap:has(.intro-star) img { max-width: none; }
+  .intro.in-frame .intro-text { max-width: none; }
   /* 화면 높이가 모자라면 항목 전체를 같은 비율로 줄여서 한 화면에 (fitIntro) */
   .intro > * { zoom: var(--intro-fit, 1); }
   /* 진입 화면 텍스트 (글꼴·크기·자간·줄 간격·색은 항목마다) */
@@ -803,13 +806,15 @@
   @keyframes iris-shrink { to { transform: scale(.3); opacity: 0; } }
 
   @media (max-width: 560px) {
-    .intro > .intro-start { margin-top: calc(var(--intro-gap-start, var(--intro-gap, 48px)) * .7); }
-    .intro > .intro-gif   { margin-top: calc(var(--intro-gap-gif,   var(--intro-gap, 48px)) * .7); }
-    .intro > .intro-img   { margin-top: calc(var(--intro-gap-img,   var(--intro-gap, 48px)) * .7); }
-    .intro > .intro-item  { margin-top: calc(var(--g, 48px) * .7); }
+    /* 휴대폰용 개별 축소 (모니터 프레임 안에서는 빼고, 전체를 같은 비율로 맞춤) */
+    .intro:not(.in-frame) > .intro-start { margin-top: calc(var(--intro-gap-start, var(--intro-gap, 48px)) * .7); }
+    .intro:not(.in-frame) > .intro-gif   { margin-top: calc(var(--intro-gap-gif,   var(--intro-gap, 48px)) * .7); }
+    .intro:not(.in-frame) > .intro-img   { margin-top: calc(var(--intro-gap-img,   var(--intro-gap, 48px)) * .7); }
+    .intro:not(.in-frame) > .intro-item  { margin-top: calc(var(--g, 48px) * .7); }
+    .intro:not(.in-frame) > .intro-prompt { margin-top: calc(var(--g, 18px) * .7); }
     .intro > :first-child { margin-top: 0; }
-    .intro-start { font-size: calc(var(--intro-start-size, 22px) * .8); }
-    .intro-star { font-size: calc(var(--intro-star-size, 34px) * .7); }
+    .intro:not(.in-frame) .intro-start { font-size: calc(var(--intro-start-size, 22px) * .8); }
+    .intro:not(.in-frame) .intro-star { font-size: calc(var(--intro-star-size, 34px) * .7); }
     .avatar { width: 128px; height: 128px; }
     .hero img, .hero video { max-height: 60vh; }
     .links { gap: 14px; }
@@ -876,7 +881,7 @@
 </div>
 
 <!-- 사이트 내용은 data.js에 들어 있습니다. 편집은 admin.html(편집기)에서 하세요. -->
-<script src="data.js?v=20261015003116"></script>
+<script src="data.js?v=20261015003711"></script>
 <script>
 const SOCIAL_ICONS = {
   instagram: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>',
@@ -2436,7 +2441,7 @@ function layoutIntroFrame() {
   const ratio = introFrame.naturalWidth / introFrame.naturalHeight;
   const size = clampN(f.size, 88, 30, 150) / 100;          // 화면 높이 대비 컴퓨터 크기
   let H = vh * size, W = H * ratio;
-  const maxW = vw * (vw < 560 ? 1.1 : .96);
+  const maxW = vw < 560 ? vw * clampN(f.mobileWidth, 92, 50, 130) / 100 : vw * .96;   // 휴대폰: 편집기에서 정한 폭
   if (W > maxW) { W = maxW; H = W / ratio; }
   const left = (vw - W) / 2 + clampN(f.offsetX, 0, -50, 50) / 100 * vw;
   const top = (vh - H) / 2 + clampN(f.offsetY, 0, -50, 50) / 100 * vh;
