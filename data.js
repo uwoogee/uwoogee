@@ -264,7 +264,7 @@ window.SITE = {
     },
     {
       "title": "GRAND CHASE",
-      "sub": " 2023.10 - 재직 중",
+      "sub": "회사 작업물",
       "icon": "star",
       "url": "",
       "thumb": "uploads/20261010-072017-Untitled-6.jpg",
@@ -300,8 +300,8 @@ window.SITE = {
       "date": " 2023.10 - 재직 중"
     },
     {
-      "title": "GRAND CHASE / Artwork",
-      "sub": " 2023.10 - 재직 중",
+      "title": "GRAND CHASE",
+      "sub": "회사 작업물",
       "url": "",
       "thumb": "uploads/20261015-001218-333.jpg",
       "desc": "",
@@ -323,11 +323,13 @@ window.SITE = {
           "src": "uploads/20261015-000345-Frame-5.webp"
         }
       ],
-      "hoverColor": "#3dbed1"
+      "hoverColor": "#3dbed1",
+      "contribution": "회사 작업물 / 디자인 100%",
+      "date": " 2023.10 - 재직 중"
     },
     {
       "title": "CELLBIG",
-      "sub": " 2022.07 - 2023.07",
+      "sub": "회사 작업물",
       "url": "",
       "thumb": "uploads/20261010-072021-Untitled-7.jpg",
       "desc": "CELLBIG 소속 UI/UX 디자이너로서 '키즐(keezle)'과 협업하여 유아용 체험\n활동 게임의 UI를 디자인하고 Unity UGUI 구현을 담당했습니다. 주요 타겟인\n어린이의 눈높이에 맞춰 캐주얼한 타이포그래피와 직관적인 아이콘을 적용하여,\n친숙하고 사용하기 쉬운 인터페이스를 완성했습니다.",
