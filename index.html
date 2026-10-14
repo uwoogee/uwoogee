@@ -881,7 +881,7 @@
 </div>
 
 <!-- 사이트 내용은 data.js에 들어 있습니다. 편집은 admin.html(편집기)에서 하세요. -->
-<script src="data.js?v=20261015004710"></script>
+<script src="data.js?v=20261015010502"></script>
 <script>
 const SOCIAL_ICONS = {
   instagram: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>',
@@ -1515,7 +1515,79 @@ function decodeGif(buf, maxBytes = 120e6) {
 }
 const isPhone = () => matchMedia("(pointer: coarse)").matches || window.innerWidth < 560;
 /* root 안의 GIF <img> 들을 직접 재생 (img 는 그대로 두고 src 만 프레임 그림으로 바꿔 끼움 → 크기·스타일 그대로) */
+/* 휴대폰: 배경 층(CSS 배경)의 GIF 도 멈추지 않게 → 프레임을 풀어서 캔버스에 직접 그림 (꽉 채우기·타일·흐르기·좌우 이동 그대로) */
+const gifFrameCache = new Map();
+function gifBitmaps(src) {
+  if (!gifFrameCache.has(src)) gifFrameCache.set(src, (async () => {
+    const { W, H, frames } = decodeGif(await (await fetch(src)).arrayBuffer());
+    let list = frames;
+    /* 프레임이 아주 많으면 메모리를 아끼려고 한 장씩 건너뜀 (그만큼 오래 보여줘서 속도는 같게) */
+    while (list.length > 2 && list.length * W * H * 4 > 48e6)
+      list = list.filter((_, i) => i % 2 === 0).map((f, i) => ({ data: f.data, delay: f.delay + (list[i * 2 + 1] || f).delay }));
+    const bmps = await Promise.all(list.map(f => createImageBitmap(f.data)));
+    const delays = list.map(f => f.delay), total = delays.reduce((a, b) => a + b, 0);
+    return { W, H, bmps, delays, total };
+  })().catch(() => null));
+  return gifFrameCache.get(src);
+}
+const gifCanvases = new Set();
+let gifLoop = 0;
+function drawGifCanvases(now) {
+  gifCanvases.forEach(cv => {
+    const host = cv.parentElement;
+    if (!cv.isConnected || !host) return gifCanvases.delete(cv);
+    if (Number(getComputedStyle(host).opacity) === 0 || host.closest("[hidden]")) return;
+    const g = cv._gif, d = host.dataset;
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const cw = Math.max(1, Math.round(host.clientWidth * dpr)), ch = Math.max(1, Math.round(host.clientHeight * dpr));
+    if (cv.width !== cw || cv.height !== ch) { cv.width = cw; cv.height = ch; }
+    const ctx = cv.getContext("2d");
+    ctx.imageSmoothingEnabled = !("pixel" in d);
+    let t = now % g.total, k = 0;
+    while (k < g.delays.length - 1 && t >= g.delays[k]) t -= g.delays[k++];
+    const img = g.bmps[k], ratio = g.H / g.W;
+    ctx.clearRect(0, 0, cw, ch);
+    const mode = d.mode || "cover";
+    let px = Number(d.x ?? 50) / 100, py = Number(d.y ?? 50) / 100;
+    if (mode === "pan") {                                     // 좌우 이동: 장면이 보이는 동안 0% → 100%
+      const p = Math.min(1, (now - (host._shownAt || now)) / (host._panMs || 3000));
+      px = p < .5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2; py = .5;
+    }
+    if (mode === "tile" || mode === "flow") {
+      const tw = Number(d.tile || 120) * dpr, th = tw * ratio;
+      let ox = (cw - tw) * px, oy = (ch - th) * py;
+      if (mode === "flow") {
+        const fdx = Number(d.fdx), fdy = Number(d.fdy), sp = Number(d.speed || 40) * dpr / (Math.hypot(fdx, fdy) || 1);
+        ox = fdx * sp * now / 1000; oy = fdy * sp * now / 1000;
+      }
+      ox = ((ox % tw) + tw) % tw - tw; oy = ((oy % th) + th) % th - th;
+      for (let y = oy; y < ch; y += th) for (let x = ox; x < cw; x += tw) ctx.drawImage(img, x, y, tw, th);
+      return;
+    }
+    let dw, dh;
+    if (mode === "contain") { const s = Math.min(cw / g.W, ch / g.H); dw = g.W * s; dh = g.H * s; }
+    else if (mode === "size") { dw = cw * Number(d.scale || 50) / 100; dh = dw * ratio; }
+    else { const s = Math.max(cw / g.W, ch / g.H); dw = g.W * s; dh = g.H * s; }   // cover · zoom · pan
+    ctx.drawImage(img, (cw - dw) * px, (ch - dh) * py, dw, dh);
+  });
+  gifLoop = gifCanvases.size ? requestAnimationFrame(drawGifCanvases) : 0;
+}
+function playBgGifs(root) {
+  if (!isPhone() || !window.createImageBitmap) return;
+  root.querySelectorAll(".bgl[data-gif]").forEach(async host => {
+    const g = await gifBitmaps(host.dataset.gif);
+    if (!g || g.bmps.length < 2 || !host.isConnected) return;
+    const cv = document.createElement("canvas");
+    cv.style.cssText = "position:absolute;inset:0;width:100%;height:100%;pointer-events:none";
+    cv._gif = g;
+    host.appendChild(cv);
+    host.style.backgroundImage = "none";                   // 멈춘 원본 GIF 대신 캔버스로
+    gifCanvases.add(cv);
+    if (!gifLoop) gifLoop = requestAnimationFrame(drawGifCanvases);
+  });
+}
 function playGifsManually(root) {
+  playBgGifs(root);
   if (!isPhone() || !window.ImageData) return;
   root.querySelectorAll("img").forEach(async img => {
     const src = img.getAttribute("src") || "";
@@ -2193,12 +2265,15 @@ function introBgLayer(it) {
         const [dx, dy] = { diag: [1, 1], up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] }[st.dir] || [1, 1];
         css.push(`--fdx:${dx}`, `--fdy:${dy}`, `--tile:${tile}px`, `--fdur:${(tile * Math.hypot(dx, dy) / num(st.speed, 40, 2, 600)).toFixed(2)}s`);
       }
-      return `<div class="bgl step m-${mode}${k === 0 ? " on" : ""}" data-hold="${num(st.hold, 3, .3, 60)}" style="${css.filter(Boolean).join(";")}"></div>`;
+      const [fdx, fdy] = mode === "flow" ? ({ diag: [1, 1], up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] }[st.dir] || [1, 1]) : [0, 0];
+      const gifData = /\.gif(\?|#|$)/i.test(it.src) ? ` data-gif="${esc(it.src)}" data-mode="${mode}" data-tile="${tile}" data-x="${num(it.x, 50, -100, 200)}" data-y="${num(it.y, 50, -100, 200)}" data-fdx="${fdx}" data-fdy="${fdy}" data-speed="${num(st.speed, 40, 2, 600)}"${it.pixel ? " data-pixel" : ""}` : "";
+      return `<div class="bgl step m-${mode}${k === 0 ? " on" : ""}" data-hold="${num(st.hold, 3, .3, 60)}"${gifData} style="${css.filter(Boolean).join(";")}"></div>`;
     }).join("");
     return `<div class="intro-bg-layer intro-item seq" data-fade="${num(seq.fade, .8, 0, 5)}" data-trans="${["fade", "glitch", "cut", "whip", "glitchwhip", "flash", "random"].includes(seq.trans) ? seq.trans : "fade"}" style="opacity:${num(it.opacity, 1, 0, 1)}">${steps}</div>`;
   }
-  const main = `<div class="bgl" style="${bg}"></div>`;
-  const copies = it.glitch ? glitchCopies(`<div class="bgl CLS" aria-hidden="true" style="${bg}"></div>`) : "";
+  const gifData = /\.gif(\?|#|$)/i.test(it.src) ? ` data-gif="${esc(it.src)}" data-mode="${fit}" data-tile="${num(it.tile, 120, 8, 2000)}" data-scale="${num(it.scale, 50, 1, 400)}" data-x="${num(it.x, 50, -100, 200)}" data-y="${num(it.y, 50, -100, 200)}"${it.pixel ? " data-pixel" : ""}` : "";
+  const main = `<div class="bgl"${gifData} style="${bg}"></div>`;
+  const copies = it.glitch ? glitchCopies(`<div class="bgl CLS" aria-hidden="true"${gifData} style="${bg}"></div>`) : "";
   return `<div class="intro-bg-layer intro-item${it.glitch ? " glitch" : ""}"${glitchStyle(it, ` style="opacity:${num(it.opacity, 1, 0, 1)}"`)}>${main}${copies}</div>`;
 }
 const BG_MODES = ["cover", "contain", "tile", "flow", "zoom", "pan"];
@@ -2213,6 +2288,7 @@ function runBgSequences(root) {
     /* 장면이 시작될 때의 움직임 (확대 · 좌우 이동) */
     const motion = el => {
       const hold = Number(el.dataset.hold) * 1000 + fade;
+      el._shownAt = performance.now(); el._panMs = hold;
       if (el.classList.contains("m-zoom")) el.animate([{ transform: "scale(1)" }, { transform: "scale(1.22)" }], { duration: hold, easing: "linear", fill: "forwards" });
       if (el.classList.contains("m-pan")) el.animate([{ backgroundPosition: "0% 50%" }, { backgroundPosition: "100% 50%" }], { duration: hold, easing: "ease-in-out", fill: "forwards" });
     };
