@@ -592,7 +592,11 @@
   .intro-room { position: fixed; inset: 0; z-index: 98; background: var(--room-bg, #0d0d10) var(--room-img, none) center / cover no-repeat; }
   .intro-frame { position: fixed; z-index: 99; pointer-events: none; -webkit-user-select: none; user-select: none; -webkit-user-drag: none; }
   .intro-frame.front { z-index: 100; }               /* 화면 위에 겹치기 (모니터 자리가 투명한 그림일 때) */
-  .intro-room[hidden], .intro-frame[hidden] { display: none; }
+  .intro-room[hidden], .intro-frame[hidden], .intro-back[hidden] { display: none; }
+  /* 모니터 뒤 이미지: 방(도트 배경) 위, 모니터 그림·화면 아래 → 화면이 켜지는 동안 뒤 배경이 비치지 않게 */
+  .intro-back { position: fixed; z-index: 98; pointer-events: none; -webkit-user-select: none; user-select: none; -webkit-user-drag: none; object-fit: cover; }
+  .intro-back.entering { animation: intro-fade-in 1s ease both; }
+  .intro-back.leaving { animation: intro-out .6s ease forwards; }
   /* 방(모니터 바깥) 도트 무늬 */
   .intro-room .room-dots { position: absolute; inset: 0; background-image: var(--pd-img, none); background-position: center; }
   .intro-room.flow .room-dots { animation: page-dots-flow var(--pd-speed, 6s) linear infinite; }
@@ -608,6 +612,17 @@
     box-shadow: inset 0 0 calc(var(--crt-vignette, .6) * 50px) rgba(0, 0, 0, var(--crt-vignette, .6));
   }
   .intro.crt.crt-flicker::after { animation: crt-flicker .12s steps(2) infinite; }
+  /* 모니터 화면이 켜지는 순간: 모니터 그림이 먼저 나타난 뒤 →
+     (기본) 브라운관처럼 가운데 가로줄이 번쩍 → 위아래로 펼쳐지며 화면 켜짐  /  (fade) 모니터와 같이 서서히 */
+  .intro.in-frame.entering { animation: crt-on .75s cubic-bezier(.2, .8, .2, 1) .55s both; }
+  .intro.in-frame.entering.power-fade { animation: intro-fade-in 1s ease both; }
+  .intro.in-frame.entering:not(.power-fade) > * { animation-delay: calc(1.25s + var(--i, 0) * .15s); }
+  @keyframes crt-on {
+    0%   { opacity: 0; transform: scale(.5, .006); filter: brightness(5); }
+    10%  { opacity: 1; }
+    45%  { transform: scale(1, .006); filter: brightness(5); }
+    100% { opacity: 1; transform: none; filter: none; }
+  }
   @keyframes crt-flicker { 50% { opacity: .88; } }
   .intro.crt > * { filter: drop-shadow(0 0 calc(var(--crt-glow, 0) * 14px) rgba(255, 255, 255, calc(var(--crt-glow, 0) * .7))); }
   /* 도트 패턴이 천천히 흘러가기 (편집기 > 진입 화면 > 배경) */
@@ -685,12 +700,23 @@
   /* START 에 마우스를 올리면: 깜빡임 멈춤 + 색 바뀜 (▶ 도 같은 색) */
   .intro-start { transition: color .15s; }
   /* 호버: 색 바뀜 + 바깥 빛 번짐 (.hot = 화면 아무 곳에 마우스를 올렸을 때도) */
+  /* 글자 그림자 (편집기 > 진입 화면 > 글자 그림자) */
+  .intro { --ts-text: 0 0 0 transparent; --ts-start: 0 0 0 transparent; --ts-prompt: 0 0 0 transparent; }
+  .intro-text { text-shadow: var(--ts-text); }
+  .intro-start { text-shadow: var(--ts-start); }
+  .intro-prompt { text-shadow: var(--ts-prompt); }
   .intro-start:hover, .intro-start:focus-visible, .intro-start.hot {
     outline: none;
     color: var(--intro-start-hover, #ec8fb0);
-    text-shadow: 0 0 var(--start-glow, 12px) var(--intro-start-hover, #ec8fb0), 0 0 calc(var(--start-glow, 12px) * 2.2) var(--intro-start-hover, #ec8fb0);
+    text-shadow: var(--ts-start),
+      0 0 calc(var(--start-glow, 12px) * .3) var(--sg1, var(--intro-start-hover, #ec8fb0)),
+      0 0 var(--start-glow, 12px) var(--sg2, var(--intro-start-hover, #ec8fb0)),
+      0 0 calc(var(--start-glow, 12px) * 2.2) var(--sg3, var(--intro-start-hover, #ec8fb0));
   }
-  .intro-start:hover img, .intro-start.hot img { filter: drop-shadow(0 0 var(--start-glow, 12px) var(--intro-start-hover, #ec8fb0)); }
+  .intro-start:hover img, .intro-start.hot img { filter: drop-shadow(0 0 var(--start-glow, 12px) var(--sg2, var(--intro-start-hover, #ec8fb0))); }
+  /* 빛 합성 '더하기'(포토샵 선형 닷지(추가)): 빛이 뒤 화면 위에 더해져 쨍하고 투명하게 */
+  .intro-start.glow-add:hover, .intro-start.glow-add.hot { mix-blend-mode: screen; }
+  @supports (mix-blend-mode: plus-lighter) { .intro-start.glow-add:hover, .intro-start.glow-add.hot { mix-blend-mode: plus-lighter; } }
   .intro.any-click { cursor: pointer; }
   /* 가만있으면 재촉: 글자 위로 빛줄기가 쓱 + 통통 + ▶ 콕콕 */
   .intro-start::after {
@@ -812,6 +838,7 @@
 
 <!-- 진입 화면 (편집기 > 진입 화면) -->
 <div class="intro-room" id="intro-room" hidden><div class="room-dots"></div></div>
+<img class="intro-back" id="intro-back" alt="" draggable="false" hidden>
 <div class="intro" id="intro" hidden></div>
 <img class="intro-frame" id="intro-frame" alt="" draggable="false" hidden>
 
@@ -849,7 +876,7 @@
 </div>
 
 <!-- 사이트 내용은 data.js에 들어 있습니다. 편집은 admin.html(편집기)에서 하세요. -->
-<script src="data.js?v=20261014232653"></script>
+<script src="data.js?v=20261015003116"></script>
 <script>
 const SOCIAL_ICONS = {
   instagram: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>',
@@ -2267,11 +2294,34 @@ function buildIntro(c) {
     "--intro-start-w": px(c.startWidth), "--intro-start-color": c.startColor,
     "--intro-star-color": c.starColor, "--intro-star-size": px(c.starSize) };
   Object.entries(vars).forEach(([k, v]) => v ? intro.style.setProperty(k, v) : intro.style.removeProperty(k));
+  /* START 빛 번짐 세기: 안쪽(진함) → 바깥(옅음) 세 겹의 진하기 */
+  {
+    const [hr, hg, hb] = hexToRgb(c.startHoverColor || "#ec8fb0");
+    const pw = Math.max(.1, Math.min(3, Number(c.startGlowPower ?? 1)));
+    [[1, .95], [2, .75], [3, .5]].forEach(([k, a]) => intro.style.setProperty("--sg" + k, `rgba(${hr}, ${hg}, ${hb}, ${Math.min(1, a * pw).toFixed(3)})`));
+  }
+  /* 글자 그림자: 방향·거리·흐림·세기·색 + 여러 겹(입체) */
+  const ts = c.textShadow || {};
+  const tsOn = ts.enabled === true;
+  ["text", "start", "prompt"].forEach(k => {
+    const apply = tsOn && (ts.targets || {})[k] !== false;
+    if (!apply) return intro.style.removeProperty("--ts-" + k);
+    const n = (v, d, a, b) => Math.max(a, Math.min(b, Number(v ?? d)));
+    const dist = n(ts.dist, 4, 0, 60), ang = n(ts.angle, 45, 0, 360) * Math.PI / 180, blur = n(ts.blur, 0, 0, 40);
+    const layers = Math.round(n(ts.layers, 1, 1, 12));
+    const [r, g, b] = hexToRgb(ts.color || "#000000"), a = n(ts.opacity, .8, 0, 1);
+    const shadows = [];
+    for (let i = 1; i <= layers; i++) {
+      const d = dist * i / layers;
+      shadows.push(`${(Math.cos(ang) * d).toFixed(2)}px ${(Math.sin(ang) * d).toFixed(2)}px ${blur}px rgba(${r}, ${g}, ${b}, ${a})`);
+    }
+    intro.style.setProperty("--ts-" + k, shadows.join(", "));
+  });
   applyIntroDots(c);
 
   const starsHTML = INTRO_STARS.map(([x, y], k) =>
     `<span class="intro-star" style="left:${x}%;top:${y}%;animation-delay:${k * .7}s">★</span>`).join("");
-  const startHTML = (gap, item = true) => `<button class="intro-start${item ? " intro-item" : ""}" type="button" aria-label="시작" data-label="${c.startImage ? "" : esc(c.startText || "START")}"${gap}>${
+  const startHTML = (gap, item = true) => `<button class="intro-start${item ? " intro-item" : ""}${c.startGlowBlend === "normal" ? "" : " glow-add"}" type="button" aria-label="시작" data-label="${c.startImage ? "" : esc(c.startText || "START")}"${gap}>${
     c.startImage ? `<img src="${esc(c.startImage)}" alt="">` : esc(c.startText || "START")}</button>`;
   const gapAttr = it => it.gap != null && !isNaN(it.gap) ? ` style="--g:${Number(it.gap)}px"` : "";
   const parts = [], bgLayers = [];
@@ -2344,6 +2394,7 @@ function buildIntro(c) {
    브라운관 효과: 주사선 · 가장자리 어둡게 · 유리 반사광 · 빛 번짐 · 깜빡임 */
 const introRoom = document.getElementById("intro-room");
 const introFrame = document.getElementById("intro-frame");
+const introBack = document.getElementById("intro-back");
 const frameState = { cfg: null };
 const clampN = (v, def, min, max) => Math.max(min, Math.min(max, Number(v ?? def)));
 function applyIntroFrame(c) {
@@ -2355,7 +2406,7 @@ function applyIntroFrame(c) {
   intro.classList.toggle("crt", on && f.crt !== false);
   if (!on) {
     ["left", "top", "width", "height", "borderRadius", "inset"].forEach(k => intro.style[k] = "");
-    introRoom.hidden = introFrame.hidden = true;
+    introRoom.hidden = introFrame.hidden = introBack.hidden = true;
     return;
   }
   const rs = introRoom.style, is = intro.style;
@@ -2368,6 +2419,8 @@ function applyIntroFrame(c) {
   is.setProperty("--crt-glow", clampN(f.glow, 0, 0, 1));
   intro.classList.toggle("crt-flicker", f.flicker === true);
   introFrame.classList.toggle("front", f.front === true);
+  if (f.backImage) { if (introBack.getAttribute("src") !== f.backImage) introBack.src = f.backImage; }
+  else introBack.removeAttribute("src");
   if (introFrame.getAttribute("src") !== f.src) {
     introFrame.src = f.src;
     introFrame.onload = layoutIntroFrame;
@@ -2397,15 +2450,23 @@ function layoutIntroFrame() {
     width: W * sw + "px", height: H * sh + "px",
     borderRadius: `${clampN(f.radius, 6, 0, 50)}% / ${clampN(f.radius, 6, 0, 50) * (sw * W) / (sh * H)}%`,
   });
+  /* 모니터 뒤 이미지: 기본은 화면 자리보다 살짝 크게(테두리 틈까지 가림), '그림 크기'면 컴퓨터 그림 전체 크기 */
+  if (f.backFit === "frame") Object.assign(introBack.style, { left: left + "px", top: top + "px", width: W + "px", height: H + "px", borderRadius: "" });
+  else {
+    const pad = clampN(f.backPad, 2, 0, 20) / 100;
+    Object.assign(introBack.style, {
+      left: left + W * (sx - pad) + "px", top: top + H * (sy - pad) + "px",
+      width: W * (sw + pad * 2) + "px", height: H * (sh + pad * 2) + "px", borderRadius: intro.style.borderRadius });
+  }
   fitIntro();
 }
 /* 진입 화면이 보이고 사라지고 페이드되는 것에 방·컴퓨터 그림도 같이 따라가게 */
 function syncIntroRoom() {
   const on = !!frameState.cfg && !intro.hidden;
   introRoom.hidden = introFrame.hidden = !on;
+  introBack.hidden = !on || !(frameState.cfg && frameState.cfg.backImage);
   ["leaving", "entering"].forEach(k => {
-    introRoom.classList.toggle(k, on && intro.classList.contains(k));
-    introFrame.classList.toggle(k, on && intro.classList.contains(k));
+    [introRoom, introFrame, introBack].forEach(el => el.classList.toggle(k, on && intro.classList.contains(k)));
   });  if (on && !introRoom._shown) requestAnimationFrame(layoutIntroFrame);   // 막 보이기 시작하면 크기 다시 맞추기
   introRoom._shown = on;
 }
@@ -2420,11 +2481,14 @@ function fitIntro() {
   intro.style.setProperty("--intro-fit", "1");
   const kids = [...intro.children].filter(e => e.offsetParent !== null && !e.classList.contains("intro-bg-layer"));
   if (!kids.length) return;
-  const top = Math.min(...kids.map(e => e.getBoundingClientRect().top));
-  const bottom = Math.max(...kids.map(e => e.getBoundingClientRect().bottom));
+  /* 화면이 켜지는 중(가로줄로 눌려 있음)이면 그만큼 되돌려서 실제 크기로 계산 */
+  const box = intro.getBoundingClientRect();
+  const sx = intro.offsetWidth ? box.width / intro.offsetWidth : 1, sy = intro.offsetHeight ? box.height / intro.offsetHeight : 1;
+  if (sx < .02 || sy < .02) { requestAnimationFrame(() => setTimeout(fitIntro, 100)); }   // 너무 납작하면 조금 뒤에 다시
+  const rects = kids.map(e => e.getBoundingClientRect());
+  const top = Math.min(...rects.map(r => r.top)) / sy, bottom = Math.max(...rects.map(r => r.bottom)) / sy;
   const avail = intro.clientHeight - 48;
-  const left = Math.min(...kids.map(e => e.getBoundingClientRect().left));
-  const right = Math.max(...kids.map(e => e.getBoundingClientRect().right));
+  const left = Math.min(...rects.map(r => r.left)) / sx, right = Math.max(...rects.map(r => r.right)) / sx;
   const availW = intro.clientWidth - 32;
   const fit = Math.min(1, bottom - top > avail ? avail / (bottom - top) : 1, right - left > availW ? availW / (right - left) : 1, 1);
   const minFit = intro.classList.contains("in-frame") ? .1 : .4;
@@ -2776,9 +2840,11 @@ function showIntro(c, onStart) {
   if (onStart) {
     [...intro.children].forEach((el, i) => el.style.setProperty("--i", i));
     intro.classList.add("entering");
+    intro.classList.toggle("power-fade", ((c.frame || {}).powerOn) === "fade");
     /* 다 나타나면 페이드인 표시를 떼서, 이후 어떤 경우에도 다시 재생되지 않게 */
     clearTimeout(intro._enterDone);
-    intro._enterDone = setTimeout(() => intro.classList.remove("entering"), (0.15 + intro.children.length * 0.15 + 1.1) * 1000);
+    const extra = intro.classList.contains("in-frame") && !intro.classList.contains("power-fade") ? 1.25 : 0;   // 화면 켜짐 시간만큼 더
+    intro._enterDone = setTimeout(() => intro.classList.remove("entering"), (extra + 0.15 + intro.children.length * 0.15 + 1.1) * 1000);
     const ui = introMusic.bgm && introMusic.bgm.ui;
     if (ui) { ui.classList.add("fade-in"); ui.addEventListener("animationend", () => ui.classList.remove("fade-in"), { once: true }); }
   } else intro.classList.remove("entering");
@@ -2788,6 +2854,7 @@ function showIntro(c, onStart) {
   const start = () => {
     if (started) return;                                  // 버튼·화면·키보드가 겹쳐도 한 번만
     started = true;
+    clearTimeout(intro._enterDone); intro.classList.remove("entering");
     intro.onclick = intro.onpointerenter = intro.onpointerleave = null;
     if (intro._stopNudge) intro._stopNudge();
     playSfx(introSfx(c, "start"));                       // 띠롱!

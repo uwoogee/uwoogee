@@ -129,20 +129,16 @@ window.SITE = {
       "desc": "던전앤파이터 모바일의 기존 디자인을 새로운 콘셉트로 재해석한 UI/UX 디자인입니다.",
       "post": [
         {
-          "type": "image",
-          "src": "uploads/20261014-030123-file.jpg"
-        },
-        {
           "type": "youtube",
           "src": "https://youtube.com/shorts/EAR9lfg-Sxg?feature=share"
         },
         {
           "type": "image",
-          "src": "uploads/20261014-032149-3.webp"
+          "src": "uploads/20261014-032828-6.webp"
         },
         {
           "type": "image",
-          "src": "uploads/20261014-032828-6.webp"
+          "src": "uploads/20261014-030123-file.jpg"
         },
         {
           "type": "image",
@@ -151,11 +147,55 @@ window.SITE = {
         {
           "type": "image",
           "src": "uploads/20261014-032245-5.jpg"
+        },
+        {
+          "type": "image",
+          "src": "uploads/20261014-032149-3.webp"
         }
       ],
       "hoverColor": "#99b649",
       "contribution": "UI/UX 100%",
       "date": "26.09.18 - 26.09.24 (7일)"
+    },
+    {
+      "title": "CASUAL RPG / Type 2",
+      "sub": "#CASUAL #OPENWORLD #MOBILE",
+      "url": "",
+      "thumb": "uploads/20261015-001729-412.jpg",
+      "desc": "캐주얼 RPG의 콘셉트와 내러티브를 바탕으로 두 가지 UI/UX 시안을 제작하였습니다.\n명도 대비를 활용한 정보의 가시성, 직관적이고 편리한 조작성, 세계관의 시각적 요소를 UI 전반에 자연스럽게 녹여낸 몰입감을 핵심 설계 방향으로 설정하였습니다.",
+      "post": [
+        {
+          "type": "image",
+          "src": "uploads/20261015-001906-_.png"
+        },
+        {
+          "type": "image",
+          "src": "uploads/20261015-002337-2.jpg"
+        },
+        {
+          "type": "image",
+          "src": "uploads/20261015-002345-44.jpg"
+        },
+        {
+          "type": "image",
+          "src": "uploads/20261015-001909-_.png"
+        },
+        {
+          "type": "image",
+          "src": "uploads/20261015-002358-5.jpg"
+        },
+        {
+          "type": "image",
+          "src": "uploads/20261015-002352-533.jpg"
+        },
+        {
+          "type": "image",
+          "src": "uploads/20261015-002405-6.jpg"
+        }
+      ],
+      "hoverColor": "#40a4b7",
+      "contribution": "UI/UX 100%",
+      "date": "2026.10.07 - 2026.10.14 (7일)"
     },
     {
       "title": "VERTICAL SUBCULTURE",
@@ -258,6 +298,32 @@ window.SITE = {
       "hoverColor": "#ffa200",
       "contribution": "회사 작업물 UI 100%",
       "date": " 2023.10 - 재직 중"
+    },
+    {
+      "title": "GRAND CHASE / Artwork",
+      "sub": " 2023.10 - 재직 중",
+      "url": "",
+      "thumb": "uploads/20261015-001218-333.jpg",
+      "desc": "",
+      "post": [
+        {
+          "type": "image",
+          "src": "uploads/20261015-000330-Frame-1.webp"
+        },
+        {
+          "type": "image",
+          "src": "uploads/20261015-000337-Frame-3.webp"
+        },
+        {
+          "type": "image",
+          "src": "uploads/20261015-000341-Frame-4.webp"
+        },
+        {
+          "type": "image",
+          "src": "uploads/20261015-000345-Frame-5.webp"
+        }
+      ],
+      "hoverColor": "#3dbed1"
     },
     {
       "title": "CELLBIG",
@@ -437,9 +503,10 @@ window.SITE = {
     "items": [
       {
         "type": "image",
-        "src": "uploads/20261011-140015-Untitled-1-02.png",
+        "src": "uploads/20261014-234350-231.png",
         "width": 1144,
-        "gap": 188
+        "gap": 188,
+        "glitch": true
       },
       {
         "type": "start",
@@ -516,7 +583,8 @@ window.SITE = {
         "dotOpacity": 0.6,
         "dotFlow": "diag",
         "dotSpeed": 50
-      }
+      },
+      "backImage": "uploads/20261014-235314-file.png"
     },
     "dotFlow": "diag",
     "prompt": {
@@ -530,7 +598,16 @@ window.SITE = {
       "name": "ScreenRecording_10-14-2026_audio_trimmed_17s.mp3",
       "volume": 0.3,
       "fade": 1.4
-    }
+    },
+    "textShadow": {
+      "enabled": true,
+      "blur": 3,
+      "layers": 9,
+      "opacity": 0.55,
+      "dist": 6
+    },
+    "startGlow": 40,
+    "startGlowPower": 2.5
   },
   "stickers": {
     "images": [
