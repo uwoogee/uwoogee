@@ -426,7 +426,7 @@ window.SITE = {
   "intro": {
     "frequency": "always",
     "enabled": true,
-    "startSize": 30,
+    "startSize": 63,
     "bg": "#000000",
     "transition": {
       "waveMs": 600,
@@ -438,39 +438,48 @@ window.SITE = {
       {
         "type": "image",
         "src": "uploads/20261011-140015-Untitled-1-02.png",
-        "width": 568
+        "width": 1144,
+        "gap": 188
       },
       {
         "type": "start",
-        "gap": 52
+        "gap": 50
       },
       {
-        "type": "image",
-        "src": "uploads/20261011-144829-dot2.gif",
-        "width": 128,
-        "gap": 114
+        "type": "bg",
+        "src": "uploads/20261014-223346-u3249841969_Animate_the_exact_same_chara.gif",
+        "glitch": true,
+        "seq": {
+          "steps": [
+            {
+              "mode": "cover",
+              "hold": 0.6
+            },
+            {
+              "mode": "tile",
+              "hold": 3,
+              "tile": 200
+            },
+            {
+              "mode": "pan",
+              "hold": 4,
+              "tile": 160
+            }
+          ],
+          "enabled": true,
+          "fade": 0.25,
+          "trans": "glitchwhip"
+        }
       }
     ],
-    "music": {
-      "src": "uploads/20261011-145848-file.mp3",
-      "name": "배경음악.mp3",
-      "volume": 0.2,
-      "position": "top-right",
-      "hint": "소리켜기",
-      "fade": 2
-    },
     "starSize": 58,
-    "dots": true,
-    "dotSize": 330,
-    "dotGap": 627,
+    "dotSize": 37,
+    "dotGap": 145,
     "dotOpacity": 1,
     "dotColor": "#1c1c1c",
-    "dotTwinkle": "pop",
-    "dotSizeVary": 0.5,
     "dotTwinkleSpeed": 0.4,
-    "dotLayout": "random",
-    "dotJitter": 0.65,
-    "startColor": "#b3b3b3",
+    "dotLayout": "stagger",
+    "dotJitter": 0.15,
     "sfx": {
       "start": {
         "preset": "blip"
@@ -479,6 +488,48 @@ window.SITE = {
         "preset": "bell",
         "enabled": false
       }
+    },
+    "frame": {
+      "enabled": true,
+      "src": "uploads/20261014-232628-32.png",
+      "screen": {
+        "w": 60.2,
+        "h": 36.8,
+        "x": 14.7,
+        "y": 15.8
+      },
+      "size": 86,
+      "offsetY": 5,
+      "flicker": true,
+      "glow": 0.55,
+      "front": true,
+      "radius": 0,
+      "scanlines": 0.45,
+      "vignette": 1,
+      "glare": 0.6,
+      "roomDots": {
+        "dots": true,
+        "dotSize": 55,
+        "dotGap": 169,
+        "dotLayout": "stagger",
+        "dotColor": "#1c1c1c",
+        "dotOpacity": 0.6,
+        "dotFlow": "diag",
+        "dotSpeed": 50
+      }
+    },
+    "dotFlow": "diag",
+    "prompt": {
+      "size": 32,
+      "gap": 200,
+      "color": "#eeff00",
+      "enabled": false
+    },
+    "music": {
+      "src": "uploads/20261014-231531-ScreenRecording_10-14-2026_audio_trimmed.mp3",
+      "name": "ScreenRecording_10-14-2026_audio_trimmed_17s.mp3",
+      "volume": 0.3,
+      "fade": 1.4
     }
   },
   "stickers": {
@@ -507,10 +558,9 @@ window.SITE = {
     ]
   },
   "mainMusic": {
-    "src": "uploads/20261011-162514-file.mp3",
+    "src": "uploads/20261014-224149-file.mp3",
     "name": "뉴진.mp3",
-    "position": "top-right",
-    "fade": 1,
-    "volume": 0.35
+    "volume": 0.3,
+    "position": "top-right"
   }
 };

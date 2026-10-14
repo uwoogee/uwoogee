@@ -393,7 +393,13 @@
   .modal.glass .modal-scroll { position: relative; z-index: 1; transform: translateZ(0); }
   /* 가벼운 모드(기본): 유리 뒤를 매번 다시 흐리게 하지 않고, 팝업이 열릴 때 뒤 페이지를 한 번만 흐리게 해 둠 */
   .modal.glass.fast .modal-panel { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
-  body.glass-fast.modal-open > :is(.hero, .wrap, .stickers) { filter: var(--glass-page-filter); }
+  body.glass-fast.modal-open > :is(.hero, .wrap, .stickers, .page-dots) { filter: var(--glass-page-filter); }
+  /* ---------- 메인 페이지 도트 배경 (편집기 > 배경) ---------- */
+  .page-dots { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+  .page-dots[hidden] { display: none; }
+  .page-dots-in { position: absolute; left: 0; right: 0; top: 0; height: calc(100% + var(--pd-step, 0px)); background-image: var(--pd-img, none); background-position: center; will-change: transform; }
+  .page-dots.flow .page-dots-in { animation: page-dots-flow var(--pd-speed, 6s) linear infinite; }
+  @keyframes page-dots-flow { to { background-position: var(--pd-to); } }
   .modal.glass .modal-panel::before, .modal.glass .modal-panel::after { will-change: transform; }
   .modal.glass .modal-close { z-index: 4; }
   .modal.glass .modal-scroll::-webkit-scrollbar-thumb { border-color: transparent; }
@@ -543,6 +549,67 @@
     padding: 24px; overflow: hidden;
   }
   .intro[hidden] { display: none; }
+  /* ---------- 진입 화면 배경 층 (구성 > 배경 이미지) ---------- */
+  .intro > .intro-bg-layer { position: absolute; inset: 0; z-index: 0; pointer-events: none; margin: 0 !important; zoom: 1 !important; }
+  .intro-bg-layer .bgl { position: absolute; inset: 0; }
+  .intro-bg-layer .bgl.step { opacity: 0; }
+  .intro-bg-layer .bgl.step.on { opacity: 1; }
+  .intro-bg-layer .bgl.m-flow { animation: bg-flow var(--fdur, 3s) linear infinite; }
+  @keyframes bg-flow { from { background-position: 0 0; } to { background-position: calc(var(--fdx) * var(--tile)) calc(var(--fdy) * var(--tile)); } }
+  .intro > .intro-item:not(.intro-bg-layer), .intro > .intro-start { position: relative; z-index: 1; }
+  /* ---------- 글리치 (구성 > 이미지마다 켜기) ---------- */
+  .glitch > .gl { position: absolute; left: 0; top: 0; width: 100%; height: 100%; max-width: none; pointer-events: none; opacity: 0;
+    mix-blend-mode: screen; animation: var(--gl-d, 3s) steps(1) var(--gl-delay, 0s) infinite; }
+  .glitch > .gl-r { filter: url(#gl-red); animation-name: gl-r; }
+  .glitch > .gl-c { filter: url(#gl-cyan); animation-name: gl-c; }
+  .glitch > :first-child { animation: gl-main var(--gl-d, 3s) steps(1) var(--gl-delay, 0s) infinite; }
+  @keyframes gl-main {
+    0%, 84%, 100% { transform: none; }
+    86% { transform: translateX(calc(var(--gl-s) * 3px)) skewX(calc(var(--gl-s) * -4deg)); }
+    88% { transform: translateX(calc(var(--gl-s) * -2px)); }
+    90% { transform: none; }
+    92% { transform: translateX(calc(var(--gl-s) * 4px)) skewX(calc(var(--gl-s) * 2deg)); }
+    94% { transform: none; }
+  }
+  @keyframes gl-r {
+    0%, 84%, 96%, 100% { opacity: 0; transform: none; clip-path: inset(0); }
+    85% { opacity: .9; transform: translateX(calc(var(--gl-s) * -6px)); clip-path: inset(10% 0 62% 0); }
+    87% { opacity: .9; transform: translateX(calc(var(--gl-s) * 5px)); clip-path: inset(55% 0 22% 0); }
+    89% { opacity: .9; transform: translateX(calc(var(--gl-s) * -3px)); clip-path: inset(30% 0 48% 0); }
+    91% { opacity: .9; transform: translateX(calc(var(--gl-s) * 7px)); clip-path: inset(78% 0 4% 0); }
+    93% { opacity: .9; transform: translateX(calc(var(--gl-s) * -4px)); clip-path: inset(0 0 86% 0); }
+  }
+  @keyframes gl-c {
+    0%, 84%, 96%, 100% { opacity: 0; transform: none; clip-path: inset(0); }
+    85% { opacity: .9; transform: translateX(calc(var(--gl-s) * 5px)); clip-path: inset(40% 0 35% 0); }
+    87% { opacity: .9; transform: translateX(calc(var(--gl-s) * -6px)); clip-path: inset(5% 0 80% 0); }
+    89% { opacity: .9; transform: translateX(calc(var(--gl-s) * 4px)); clip-path: inset(66% 0 12% 0); }
+    91% { opacity: .9; transform: translateX(calc(var(--gl-s) * -5px)); clip-path: inset(20% 0 64% 0); }
+    93% { opacity: .9; transform: translateX(calc(var(--gl-s) * 3px)); clip-path: inset(85% 0 0 0); }
+  }
+
+  /* ---------- 모니터 프레임 (편집기 > 진입 화면 > 모니터 프레임) ---------- */
+  .intro-room { position: fixed; inset: 0; z-index: 98; background: var(--room-bg, #0d0d10) var(--room-img, none) center / cover no-repeat; }
+  .intro-frame { position: fixed; z-index: 99; pointer-events: none; -webkit-user-select: none; user-select: none; -webkit-user-drag: none; }
+  .intro-frame.front { z-index: 100; }               /* 화면 위에 겹치기 (모니터 자리가 투명한 그림일 때) */
+  .intro-room[hidden], .intro-frame[hidden] { display: none; }
+  /* 방(모니터 바깥) 도트 무늬 */
+  .intro-room .room-dots { position: absolute; inset: 0; background-image: var(--pd-img, none); background-position: center; }
+  .intro-room.flow .room-dots { animation: page-dots-flow var(--pd-speed, 6s) linear infinite; }
+  .intro-room.entering, .intro-frame.entering { animation: intro-fade-in 1s ease both; }
+  .intro-room.leaving, .intro-frame.leaving { animation: intro-out .6s ease forwards; }
+  /* 브라운관 효과: 유리 반사광 + 가장자리 어둡게 + 주사선 */
+  .intro.crt::after {
+    content: ""; position: absolute; inset: 0; z-index: 5; pointer-events: none; border-radius: inherit;
+    background:
+      radial-gradient(ellipse 60% 45% at 26% 16%, rgba(255, 255, 255, calc(var(--crt-glare, .15) * .9)), transparent 70%),
+      radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, var(--crt-vignette, .6)) 100%),
+      repeating-linear-gradient(to bottom, rgba(0, 0, 0, var(--crt-lines, .25)) 0 1px, transparent 1px 3px);
+    box-shadow: inset 0 0 calc(var(--crt-vignette, .6) * 50px) rgba(0, 0, 0, var(--crt-vignette, .6));
+  }
+  .intro.crt.crt-flicker::after { animation: crt-flicker .12s steps(2) infinite; }
+  @keyframes crt-flicker { 50% { opacity: .88; } }
+  .intro.crt > * { filter: drop-shadow(0 0 calc(var(--crt-glow, 0) * 14px) rgba(255, 255, 255, calc(var(--crt-glow, 0) * .7))); }
   /* 도트 패턴이 천천히 흘러가기 (편집기 > 진입 화면 > 배경) */
   /* 도트 무늬는 별도 층(::before)에 → 다른 요소와 같이 페이드인 가능 */
   .intro::before {
@@ -617,10 +684,37 @@
   .intro > :first-child { margin-top: 0; }
   /* START 에 마우스를 올리면: 깜빡임 멈춤 + 색 바뀜 (▶ 도 같은 색) */
   .intro-start { transition: color .15s; }
-  .intro-start:hover, .intro-start:focus-visible {
+  /* 호버: 색 바뀜 + 바깥 빛 번짐 (.hot = 화면 아무 곳에 마우스를 올렸을 때도) */
+  .intro-start:hover, .intro-start:focus-visible, .intro-start.hot {
     outline: none;
     color: var(--intro-start-hover, #ec8fb0);
+    text-shadow: 0 0 var(--start-glow, 12px) var(--intro-start-hover, #ec8fb0), 0 0 calc(var(--start-glow, 12px) * 2.2) var(--intro-start-hover, #ec8fb0);
   }
+  .intro-start:hover img, .intro-start.hot img { filter: drop-shadow(0 0 var(--start-glow, 12px) var(--intro-start-hover, #ec8fb0)); }
+  .intro.any-click { cursor: pointer; }
+  /* 가만있으면 재촉: 글자 위로 빛줄기가 쓱 + 통통 + ▶ 콕콕 */
+  .intro-start::after {
+    content: attr(data-label); position: absolute; inset: 0; padding: inherit; pointer-events: none;
+    color: transparent; text-shadow: none; opacity: 0;
+    background: linear-gradient(105deg, transparent 38%, rgba(255, 255, 255, .95) 50%, transparent 62%) no-repeat;
+    background-size: 250% 100%; background-position: 150% 0;
+    -webkit-background-clip: text; background-clip: text;
+  }
+  .intro-start.nudge { animation: start-bounce 1.1s ease; }
+  .intro-start.nudge::after { opacity: 1; animation: start-sweep 1.1s ease-in-out; }
+  .intro-start.nudge::before { animation: arrow-poke .36s ease-in-out 3; }
+  @keyframes start-sweep { from { background-position: 150% 0; } to { background-position: -60% 0; } }
+  @keyframes start-bounce { 0%, 100% { transform: none; } 15% { transform: scale(1.08); } 30% { transform: scale(.97); } 45% { transform: scale(1.04); } 60% { transform: none; } }
+  @keyframes arrow-poke { 50% { transform: translate(-7px, -50%); } }
+  /* 안내 문구 (PRESS START / TAP TO START) */
+  .intro-prompt {
+    font-family: "Press Start 2P", ui-monospace, monospace; font-size: var(--pr-size, 12px); letter-spacing: .08em;
+    color: var(--pr-color, #ffffff); text-align: center; white-space: nowrap;
+    animation: intro-blink var(--pr-speed, 1s) steps(1) infinite;
+  }
+  .intro > .intro-prompt { margin-top: var(--g, 18px); }
+  .intro-prompt .m { display: none; }
+  @media (hover: none) { .intro-prompt .d { display: none; } .intro-prompt .m { display: inline; } }
   /* 마우스를 올리면 왼쪽에 ▶ */
   .intro-start::before {
     content: "▶"; position: absolute; right: 100%; top: 50%; transform: translateY(-50%);
@@ -714,9 +808,12 @@
 </style>
 </head>
 <body>
+<div class="page-dots" id="page-dots" aria-hidden="true" hidden><div class="page-dots-in"></div></div>
 
 <!-- 진입 화면 (편집기 > 진입 화면) -->
+<div class="intro-room" id="intro-room" hidden><div class="room-dots"></div></div>
 <div class="intro" id="intro" hidden></div>
+<img class="intro-frame" id="intro-frame" alt="" draggable="false" hidden>
 
 <header class="hero" id="hero"></header>
 
@@ -752,7 +849,7 @@
 </div>
 
 <!-- 사이트 내용은 data.js에 들어 있습니다. 편집은 admin.html(편집기)에서 하세요. -->
-<script src="data.js?v=20261014035118"></script>
+<script src="data.js?v=20261014232653"></script>
 <script>
 const SOCIAL_ICONS = {
   instagram: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>',
@@ -1290,7 +1387,7 @@ function applyCursor(c) {
     const at = `${Math.round(hot[0])} ${Math.round(hot[1])}`;
     el.textContent =
       `html, body, body * { cursor: url("${n}") ${at}, auto; }` +
-      `a, a *, button, button *, summary, label, .card-link, .modal-close, input[type=range], [role=button], .sticker.stuck, .sticker.instant ` +
+      `a, a *, button, button *, summary, label, .card-link, .modal-close, input[type=range], [role=button], .sticker.stuck, .sticker.instant, .intro.any-click, .intro.any-click * ` +
       `{ cursor: url("${ptr || n}") ${at}, pointer; }`;
   });
 }
@@ -1390,7 +1487,7 @@ function playGifsManually(root) {
   if (!isPhone() || !window.ImageData) return;
   root.querySelectorAll("img").forEach(async img => {
     const src = img.getAttribute("src") || "";
-    if (!/\.gif(\?|#|$)/i.test(src) || img._gifPlayer === src) return;
+    if (!/\.gif(\?|#|$)/i.test(src) || img._gifPlayer === src || img.classList.contains("gl")) return;   // 글리치 복사본은 원본을 따라감
     img._gifPlayer = src;
     try {
       const buf = await (await fetch(src)).arrayBuffer();
@@ -1405,6 +1502,7 @@ function playGifsManually(root) {
       const tick = () => {
         if (!img.isConnected || img._gifPlayer !== src) { urls.forEach(URL.revokeObjectURL); return; }
         img.src = urls[k];
+        if (img.parentElement) img.parentElement.querySelectorAll(":scope > img.gl").forEach(g => g.src = urls[k]);
         setTimeout(tick, frames[k].delay);
         k = (k + 1) % urls.length;
       };
@@ -1583,6 +1681,10 @@ function render(site) {
     .forEach(([k, v]) => okColor(v) ? rootStyle.setProperty(k, v) : rootStyle.removeProperty(k));
   pop.framePad != null ? rootStyle.setProperty("--pop-frame-pad", Number(pop.framePad) + "px") : rootStyle.removeProperty("--pop-frame-pad");
   applyGlass(pop.glass);
+  /* 메인 페이지 배경 (편집기 > 배경) */
+  const pageBg = (site.theme || {}).pageBg;
+  /^#[0-9a-f]{3,8}$/i.test(pageBg || "") ? rootStyle.setProperty("--bg", pageBg) : rootStyle.removeProperty("--bg");
+  if (typeof applyPageDots === "function") try { applyPageDots((site.theme || {}).pageDots); } catch {}
   window.popToolsOff = pop.tools === false;        // PC 팝업 옆 확대·축소 도구 (편집기 > 팝업)
   modalEl.classList.toggle("has-tools", pop.tools !== false);
   if (typeof placePopTools === "function") try { placePopTools(); } catch {}
@@ -1973,6 +2075,43 @@ function introDotsTile(c) {
   return { url: `url("data:image/svg+xml,${encodeURIComponent(svg)}")`, T };
 }
 const DOT_FLOW = { diag: [1, 1], up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
+/* 메인 페이지 배경: 진입 화면과 같은 도트 무늬를 페이지 뒤에 깔기 (스크롤: 고정 / 함께 / 느리게) */
+const pageDots = { el: null, k: 0, T: 0 };
+/* 도트 무늬 층 하나 그리기 (el 에 --pd-img 등 지정, 흐르기면 .flow). 무늬 한 칸 크기 T 를 돌려줌 */
+function paintDotsLayer(el, d) {
+  if (!d || d.dots !== true) { el.style.removeProperty("--pd-img"); el.classList.remove("flow"); return 0; }
+  const { url, T } = introDotsTile(d);
+  const flow = DOT_FLOW[d.dotFlow === true ? "diag" : d.dotFlow];
+  el.style.setProperty("--pd-img", url);
+  el.style.setProperty("--pd-step", T + "px");
+  el.classList.toggle("flow", !!flow);
+  if (flow) {
+    const speed = Math.max(2, Math.min(400, Number(d.dotSpeed ?? 30)));
+    el.style.setProperty("--pd-to", `calc(50% + ${flow[0] * T}px) calc(50% + ${flow[1] * T}px)`);
+    el.style.setProperty("--pd-speed", (T * Math.hypot(...flow) / speed).toFixed(2) + "s");
+  }
+  return T;
+}
+function applyPageDots(d) {
+  const el = pageDots.el ||= document.getElementById("page-dots");
+  if (!el) return;
+  const on = !!(d && d.dots === true);
+  el.hidden = !on;
+  if (!on) return;
+  const T = paintDotsLayer(el, d);
+  pageDots.T = T;
+  pageDots.k = d.scroll === "scroll" ? 1 : d.scroll === "parallax" ? .35 : 0;
+  movePageDots();
+}
+function movePageDots() {
+  const { el, k, T } = pageDots;
+  if (!el || el.hidden) return;
+  /* 무늬는 T 마다 반복되니 T 안에서만 옮겨도 끝없이 이어져 보임 */
+  el.firstElementChild.style.transform = k && T ? `translateY(${-((window.scrollY * k) % T)}px)` : "";
+}
+window.addEventListener("scroll", movePageDots, { passive: true });
+try { applyPageDots((SITE_DATA.theme || {}).pageDots); } catch {}   // 처음 그릴 때는 위 코드가 아직 준비 전이라 여기서 한 번 더
+
 function applyIntroDots(c) {
   const props = ["--intro-dots", "--intro-dots-to", "--intro-dots-speed"];
   if (c.dots !== true) { props.forEach(k => intro.style.removeProperty(k)); intro.classList.remove("dots-flow"); return; }
@@ -1987,11 +2126,143 @@ function applyIntroDots(c) {
   intro.classList.toggle("dots-flow", !!flow);
 }
 
+/* ---------- 진입 화면 글리치 · 배경 층 ---------- */
+/* 글리치: 원본 위에 빨강·청록 복사본 2장을 겹쳐, 가끔 잘게 찢어지며 어긋나게 */
+const glitchCopies = tpl => tpl.replace("CLS", "gl gl-r") + tpl.replace("CLS", "gl gl-c");
+function glitchStyle(it, gap) {
+  if (!it.glitch) return gap;
+  const num = (v, d, a, b) => Math.max(a, Math.min(b, Number(v ?? d)));
+  const css = `--gl-s:${num(it.glitchPower, 1, .2, 4)};--gl-d:${num(it.glitchEvery, 3, .6, 12)}s;--gl-delay:-${(Math.random() * 3).toFixed(2)}s`;
+  const m = gap.match(/style="([^"]*)"/);
+  return ` style="${m ? m[1] + ";" : ""}${css}"`;
+}
+/* 배경 층: 모니터(진입 화면) 전체에 깔리는 이미지. 목록 아래쪽일수록 위에 겹침 */
+function introBgLayer(it) {
+  const num = (v, d, a, b) => Math.max(a, Math.min(b, Number(v ?? d)));
+  const fit = ["cover", "contain", "size", "tile"].includes(it.fit) ? it.fit : "cover";
+  const size = fit === "cover" ? "cover" : fit === "contain" ? "contain" : fit === "size" ? num(it.scale, 50, 1, 400) + "% auto" : num(it.tile, 120, 8, 2000) + "px auto";
+  const bg = [`background-image:url(&quot;${esc(it.src)}&quot;)`, `background-size:${size}`,
+    `background-position:${num(it.x, 50, -100, 200)}% ${num(it.y, 50, -100, 200)}%`,
+    `background-repeat:${fit === "tile" ? "repeat" : "no-repeat"}`,
+    it.pixel ? "image-rendering:pixelated" : ""].filter(Boolean).join(";");
+  /* 장면 순환: 꽉 채우기 → 타일 → 흐르는 타일 … 처럼 장면을 정해진 시간마다 바꾸며 반복 */
+  const seq = it.seq && it.seq.enabled && Array.isArray(it.seq.steps) && it.seq.steps.length ? it.seq : null;
+  if (seq) {
+    const steps = seq.steps.map((st, k) => {
+      const mode = BG_MODES.includes(st.mode) ? st.mode : "cover";
+      const tile = num(st.tile, 120, 8, 2000);
+      const tiled = mode === "tile" || mode === "flow";
+      const css = [`background-image:url(&quot;${esc(it.src)}&quot;)`,
+        `background-size:${tiled ? tile + "px auto" : mode === "contain" ? "contain" : "cover"}`,
+        `background-repeat:${tiled ? "repeat" : "no-repeat"}`,
+        `background-position:${mode === "flow" ? "0 0" : `${num(it.x, 50, -100, 200)}% ${num(it.y, 50, -100, 200)}%`}`,
+        it.pixel ? "image-rendering:pixelated" : ""];
+      if (mode === "flow") {
+        const [dx, dy] = { diag: [1, 1], up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] }[st.dir] || [1, 1];
+        css.push(`--fdx:${dx}`, `--fdy:${dy}`, `--tile:${tile}px`, `--fdur:${(tile * Math.hypot(dx, dy) / num(st.speed, 40, 2, 600)).toFixed(2)}s`);
+      }
+      return `<div class="bgl step m-${mode}${k === 0 ? " on" : ""}" data-hold="${num(st.hold, 3, .3, 60)}" style="${css.filter(Boolean).join(";")}"></div>`;
+    }).join("");
+    return `<div class="intro-bg-layer intro-item seq" data-fade="${num(seq.fade, .8, 0, 5)}" data-trans="${["fade", "glitch", "cut", "whip", "glitchwhip", "flash", "random"].includes(seq.trans) ? seq.trans : "fade"}" style="opacity:${num(it.opacity, 1, 0, 1)}">${steps}</div>`;
+  }
+  const main = `<div class="bgl" style="${bg}"></div>`;
+  const copies = it.glitch ? glitchCopies(`<div class="bgl CLS" aria-hidden="true" style="${bg}"></div>`) : "";
+  return `<div class="intro-bg-layer intro-item${it.glitch ? " glitch" : ""}"${glitchStyle(it, ` style="opacity:${num(it.opacity, 1, 0, 1)}"`)}>${main}${copies}</div>`;
+}
+const BG_MODES = ["cover", "contain", "tile", "flow", "zoom", "pan"];
+/* 장면 순환 돌리기: 장면마다 정한 시간만큼 보여주고 → 고른 전환(페이드·글리치·바로)으로 다음 장면 → 반복 */
+function runBgSequences(root) {
+  root.querySelectorAll(".intro-bg-layer.seq").forEach(layer => {
+    const steps = [...layer.querySelectorAll(".bgl.step")];
+    if (!steps.length) return;
+    const fade = Number(layer.dataset.fade) * 1000, transSetting = layer.dataset.trans;
+    const TRANS = ["fade", "glitch", "cut", "whip", "glitchwhip", "flash"];
+    let i = 0;
+    /* 장면이 시작될 때의 움직임 (확대 · 좌우 이동) */
+    const motion = el => {
+      const hold = Number(el.dataset.hold) * 1000 + fade;
+      if (el.classList.contains("m-zoom")) el.animate([{ transform: "scale(1)" }, { transform: "scale(1.22)" }], { duration: hold, easing: "linear", fill: "forwards" });
+      if (el.classList.contains("m-pan")) el.animate([{ backgroundPosition: "0% 50%" }, { backgroundPosition: "100% 50%" }], { duration: hold, easing: "ease-in-out", fill: "forwards" });
+    };
+    const glitchIn = [
+      { clipPath: "inset(0 0 70% 0)", transform: "translateX(-12px)", opacity: 1 },
+      { clipPath: "inset(40% 0 30% 0)", transform: "translateX(10px)", opacity: 1 },
+      { clipPath: "inset(10% 0 55% 0)", transform: "translateX(-6px)", opacity: 1 },
+      { clipPath: "inset(65% 0 0 0)", transform: "translateX(8px)", opacity: 1 },
+      { clipPath: "inset(0)", transform: "none", opacity: 1 }];
+    /* 지난 전환 효과가 남아 겹치지 않게 (흐르는 타일의 CSS 애니메이션은 유지) */
+    const clear = el => el.getAnimations().forEach(a => { if (!(window.CSSAnimation && a instanceof CSSAnimation)) a.cancel(); });
+    const hide = el => { clear(el); el.style.opacity = 0; el.classList.remove("on"); };
+    const show = (next, prev) => {
+      const trans = transSetting === "random" ? TRANS[Math.floor(Math.random() * TRANS.length)] : transSetting;
+      const dir = Math.random() < .5 ? 1 : -1;                 // 휙 밀기 방향 (매번 랜덤)
+      const dur = Math.max(120, fade);
+      clear(next);
+      next.style.opacity = 1; next.classList.add("on");
+      motion(next);
+      /* 휙 밀기: 새 장면이 옆에서 빠르게 미끄러져 들어오고 이전 장면은 반대로 빠짐 (잔상 흐림) */
+      if (trans === "whip") {
+        const ease = "cubic-bezier(.7, 0, .2, 1)";
+        next.animate([{ transform: `translateX(${dir * 100}%)`, filter: "blur(10px)" }, { transform: "translateX(0)", filter: "blur(0)" }], { duration: dur, easing: ease });
+        prev.animate([{ transform: "translateX(0)", filter: "blur(0)" }, { transform: `translateX(${-dir * 100}%)`, filter: "blur(10px)" }], { duration: dur, easing: ease, fill: "forwards" });
+        setTimeout(() => hide(prev), dur);
+        return;
+      }
+      /* 글리치 휙: 찢어진 조각들이 휙휙 튀며 들어옴 */
+      if (trans === "glitchwhip") {
+        next.animate([
+          { transform: `translateX(${dir * 70}%) skewX(${-dir * 14}deg)`, clipPath: "inset(0 0 62% 0)" },
+          { transform: `translateX(${-dir * 24}%) skewX(${dir * 8}deg)`, clipPath: "inset(28% 0 30% 0)" },
+          { transform: `translateX(${dir * 12}%)`, clipPath: "inset(58% 0 0 0)" },
+          { transform: `translateX(${-dir * 5}%)`, clipPath: "inset(12% 0 18% 0)" },
+          { transform: "none", clipPath: "inset(0)" }], { duration: dur, easing: "steps(5, end)" });
+        prev.animate([
+          { transform: "none", clipPath: "inset(0)" },
+          { transform: `translateX(${-dir * 18}%) skewX(${dir * 10}deg)`, clipPath: "inset(0 0 40% 0)" },
+          { transform: `translateX(${-dir * 60}%)`, clipPath: "inset(50% 0 0 0)" }], { duration: dur * .7, easing: "steps(3, end)", fill: "forwards" });
+        setTimeout(() => hide(prev), dur * .7);
+        return;
+      }
+      /* 번쩍: 하얗게 번쩍하며 바로 바뀜 */
+      if (trans === "flash") {
+        hide(prev);
+        next.animate([{ filter: "brightness(3.5) contrast(.6)" }, { filter: "brightness(1) contrast(1)" }], { duration: dur, easing: "ease-out" });
+        return;
+      }
+      if (trans === "cut" || !fade) { hide(prev); return; }
+      if (trans === "glitch") {
+        next.animate(glitchIn, { duration: Math.max(160, fade), easing: "steps(5, end)" });
+        prev.animate([{ transform: "none" }, { transform: "translateX(14px) skewX(-6deg)" }, { transform: "translateX(-10px)" }],
+          { duration: Math.max(160, fade) * .6, easing: "steps(3, end)" });
+        setTimeout(() => hide(prev), Math.max(160, fade) * .6);
+        return;
+      }
+      next.animate([{ opacity: 0 }, { opacity: 1 }], { duration: fade, easing: "ease" });
+      prev.animate([{ opacity: 1 }, { opacity: 0 }], { duration: fade, easing: "ease" });
+      setTimeout(() => hide(prev), fade);
+    };
+    steps.forEach((el, k) => el.style.opacity = k ? 0 : 1);
+    motion(steps[0]);
+    if (steps.length < 2) return;
+    const tick = () => {
+      if (!layer.isConnected) return;                       // 진입 화면이 다시 그려졌으면 멈춤
+      const prev = steps[i]; i = (i + 1) % steps.length;
+      show(steps[i], prev);
+      setTimeout(tick, Number(steps[i].dataset.hold) * 1000 + (transSetting === "cut" ? 0 : fade));
+    };
+    setTimeout(tick, Number(steps[0].dataset.hold) * 1000);
+  });
+}
+/* 빨강만 / 청록만 남기는 필터 (글리치 복사본용) */
+document.body.insertAdjacentHTML("beforeend", `<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <filter id="gl-red"><feColorMatrix type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0"/></filter>
+  <filter id="gl-cyan"><feColorMatrix type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 1 0"/></filter></svg>`);
+
 function buildIntro(c) {
   const px = v => v != null && !isNaN(v) ? Number(v) + "px" : null;
   const vars = { "--intro-bg": c.bg, "--intro-gap": px(c.gap), "--intro-logo-w": px(c.logoWidth),
     "--intro-gap-start": px(c.gapStart), "--intro-gap-gif": px(c.gapGif), "--intro-gap-img": px(c.gapImg),
-    "--intro-start-hover": c.startHoverColor,
+    "--intro-start-hover": c.startHoverColor, "--start-glow": c.startGlow != null && !isNaN(c.startGlow) ? Number(c.startGlow) + "px" : null,
     "--intro-gif-w": px(c.gifWidth), "--intro-img-w": px(c.imageWidth), "--intro-start-size": px(c.startSize),
     "--intro-start-w": px(c.startWidth), "--intro-start-color": c.startColor,
     "--intro-star-color": c.starColor, "--intro-star-size": px(c.starSize) };
@@ -2000,10 +2271,10 @@ function buildIntro(c) {
 
   const starsHTML = INTRO_STARS.map(([x, y], k) =>
     `<span class="intro-star" style="left:${x}%;top:${y}%;animation-delay:${k * .7}s">★</span>`).join("");
-  const startHTML = (gap, item = true) => `<button class="intro-start${item ? " intro-item" : ""}" type="button" aria-label="시작"${gap}>${
+  const startHTML = (gap, item = true) => `<button class="intro-start${item ? " intro-item" : ""}" type="button" aria-label="시작" data-label="${c.startImage ? "" : esc(c.startText || "START")}"${gap}>${
     c.startImage ? `<img src="${esc(c.startImage)}" alt="">` : esc(c.startText || "START")}</button>`;
   const gapAttr = it => it.gap != null && !isNaN(it.gap) ? ` style="--g:${Number(it.gap)}px"` : "";
-  const parts = [];
+  const parts = [], bgLayers = [];
   if (Array.isArray(c.items)) {
     /* 편집기에서 정한 순서대로: 이미지 여러 장 + START 하나 */
     c.items.forEach(it => {
@@ -2024,9 +2295,12 @@ function buildIntro(c) {
         return parts.push(`<div class="intro-text intro-item" style="${css}">${esc(it.text)}</div>`);
       }
       if (!it.src) return;
+      if (it.type === "bg") return bgLayers.push(introBgLayer(it));      // 배경 층은 맨 뒤에 따로 모아서
       const w = it.width != null && !isNaN(it.width) ? ` style="width:${Number(it.width)}px"` : "";
-      parts.push(`<div class="intro-logo-wrap intro-item"${gapAttr(it)}><img src="${esc(it.src)}" alt=""${w}>${it.stars ? starsHTML : ""}</div>`);
+      const copies = it.glitch ? glitchCopies(`<img src="${esc(it.src)}" alt="" aria-hidden="true" class="CLS">`) : "";
+      parts.push(`<div class="intro-logo-wrap intro-item${it.glitch ? " glitch" : ""}"${glitchStyle(it, gapAttr(it))}><img src="${esc(it.src)}" alt=""${w}>${copies}${it.stars ? starsHTML : ""}</div>`);
     });
+    parts.push(...bgLayers);
     if (!c.items.some(it => it.type === "start")) parts.push(startHTML(""));   // START 는 항상 있어야 들어갈 수 있음
   } else {
     /* 예전 형식 (로고·START·움짤·이미지 고정 칸) */
@@ -2035,8 +2309,20 @@ function buildIntro(c) {
     if (c.gif) parts.push(`<img class="intro-gif" src="${esc(c.gif)}" alt="">`);
     if (c.image) parts.push(`<img class="intro-img" src="${esc(c.image)}" alt="">`);
   }
+  /* 안내 문구는 START 바로 아래에 */
+  const pr = c.prompt || {};
+  if (pr.enabled !== false) {
+    const num = (v, d, a, b) => Math.max(a, Math.min(b, Number(v ?? d)));
+    const css = [`--g:${num(pr.gap, 18, 0, 200)}px`, `--pr-size:${num(pr.size, 12, 6, 60)}px`, `--pr-speed:${num(pr.speed, 1, .2, 4)}s`,
+      /^#[0-9a-f]{3,8}$/i.test(pr.color || "") ? `--pr-color:${pr.color}` : ""].filter(Boolean).join(";");
+    const si = parts.findIndex(x => x.includes('class="intro-start'));
+    parts.splice(si + 1, 0, `<div class="intro-prompt intro-item" style="${css}"><span class="d">${esc(pr.text || "PRESS START")}</span><span class="m">${esc(pr.mobile || "TAP TO START")}</span></div>`);
+  }
   intro.innerHTML = parts.join("");
+  window.introPreviewCfg = c;
+  applyIntroFrame(c);
   fitIntro();
+  runBgSequences(intro);
   playGifsManually(intro);
   intro.querySelectorAll("img").forEach(img => img.complete || img.addEventListener("load", fitIntro, { once: true }));
   if (document.fonts) document.fonts.ready.then(fitIntro);
@@ -2052,16 +2338,97 @@ function buildIntro(c) {
 }
 
 /* 진입 화면 내용이 화면보다 길면 같은 비율로 줄임 (휴대폰 · 낮은 창) */
+/* ---------- 진입 화면을 레트로 컴퓨터(모니터) 화면 안에 띄우기 (편집기 > 진입 화면 > 모니터 프레임) ----------
+   #intro-room : 화면 전체 배경(방)  /  #intro-frame : 컴퓨터 그림(투명 배경 PNG)
+   .intro      : 모니터 화면 영역으로 위치·크기를 맞춤 → 로고·START 등은 그 안에서 자동으로 크기 조절
+   브라운관 효과: 주사선 · 가장자리 어둡게 · 유리 반사광 · 빛 번짐 · 깜빡임 */
+const introRoom = document.getElementById("intro-room");
+const introFrame = document.getElementById("intro-frame");
+const frameState = { cfg: null };
+const clampN = (v, def, min, max) => Math.max(min, Math.min(max, Number(v ?? def)));
+function applyIntroFrame(c) {
+  const f = c && c.frame;
+  const phoneFull = f && f.mobile === "full" && window.innerWidth < 560;
+  const on = !!(f && f.enabled && f.src) && !phoneFull;
+  frameState.cfg = on ? f : null;
+  intro.classList.toggle("in-frame", on);
+  intro.classList.toggle("crt", on && f.crt !== false);
+  if (!on) {
+    ["left", "top", "width", "height", "borderRadius", "inset"].forEach(k => intro.style[k] = "");
+    introRoom.hidden = introFrame.hidden = true;
+    return;
+  }
+  const rs = introRoom.style, is = intro.style;
+  rs.setProperty("--room-bg", /^#[0-9a-f]{3,8}$/i.test(f.roomBg || "") ? f.roomBg : "#0d0d10");
+  rs.setProperty("--room-img", f.roomImage ? `url("${String(f.roomImage).replace(/"/g, "%22")}")` : "none");
+  try { paintDotsLayer(introRoom, f.roomDots); } catch {}             // 방(모니터 바깥) 도트 무늬
+  is.setProperty("--crt-lines", clampN(f.scanlines, .25, 0, 1));
+  is.setProperty("--crt-vignette", clampN(f.vignette, .6, 0, 1));
+  is.setProperty("--crt-glare", clampN(f.glare, .15, 0, 1));
+  is.setProperty("--crt-glow", clampN(f.glow, 0, 0, 1));
+  intro.classList.toggle("crt-flicker", f.flicker === true);
+  introFrame.classList.toggle("front", f.front === true);
+  if (introFrame.getAttribute("src") !== f.src) {
+    introFrame.src = f.src;
+    introFrame.onload = layoutIntroFrame;
+  }
+  syncIntroRoom();
+  layoutIntroFrame();
+}
+/* 컴퓨터 그림을 화면에 맞춰 놓고, 그 그림 속 모니터 자리에 진입 화면을 맞춤 */
+function layoutIntroFrame() {
+  const f = frameState.cfg;
+  if (!f || !introFrame.naturalWidth) return;
+  const vw = document.documentElement.clientWidth, vh = window.innerHeight;
+  const ratio = introFrame.naturalWidth / introFrame.naturalHeight;
+  const size = clampN(f.size, 88, 30, 150) / 100;          // 화면 높이 대비 컴퓨터 크기
+  let H = vh * size, W = H * ratio;
+  const maxW = vw * (vw < 560 ? 1.1 : .96);
+  if (W > maxW) { W = maxW; H = W / ratio; }
+  const left = (vw - W) / 2 + clampN(f.offsetX, 0, -50, 50) / 100 * vw;
+  const top = (vh - H) / 2 + clampN(f.offsetY, 0, -50, 50) / 100 * vh;
+  Object.assign(introFrame.style, { left: left + "px", top: top + "px", width: W + "px", height: H + "px" });
+  const s = f.screen || {};
+  const sx = clampN(s.x, 20, 0, 100) / 100, sy = clampN(s.y, 15, 0, 100) / 100;
+  const sw = clampN(s.w, 60, 1, 100) / 100, sh = clampN(s.h, 45, 1, 100) / 100;
+  Object.assign(intro.style, {
+    inset: "auto",
+    left: left + W * sx + "px", top: top + H * sy + "px",
+    width: W * sw + "px", height: H * sh + "px",
+    borderRadius: `${clampN(f.radius, 6, 0, 50)}% / ${clampN(f.radius, 6, 0, 50) * (sw * W) / (sh * H)}%`,
+  });
+  fitIntro();
+}
+/* 진입 화면이 보이고 사라지고 페이드되는 것에 방·컴퓨터 그림도 같이 따라가게 */
+function syncIntroRoom() {
+  const on = !!frameState.cfg && !intro.hidden;
+  introRoom.hidden = introFrame.hidden = !on;
+  ["leaving", "entering"].forEach(k => {
+    introRoom.classList.toggle(k, on && intro.classList.contains(k));
+    introFrame.classList.toggle(k, on && intro.classList.contains(k));
+  });  if (on && !introRoom._shown) requestAnimationFrame(layoutIntroFrame);   // 막 보이기 시작하면 크기 다시 맞추기
+  introRoom._shown = on;
+}
+new MutationObserver(syncIntroRoom).observe(intro, { attributes: true, attributeFilter: ["hidden", "class"] });
+window.addEventListener("resize", () => {
+  const c = SITE_DATA.intro || {};
+  if (frameState.cfg || (c.frame && c.frame.enabled)) applyIntroFrame(window.introPreviewCfg || c);
+});
+
 function fitIntro() {
   if (intro.hidden || !intro.children.length) return;
   intro.style.setProperty("--intro-fit", "1");
-  const kids = [...intro.children].filter(e => e.offsetParent !== null);
+  const kids = [...intro.children].filter(e => e.offsetParent !== null && !e.classList.contains("intro-bg-layer"));
   if (!kids.length) return;
   const top = Math.min(...kids.map(e => e.getBoundingClientRect().top));
   const bottom = Math.max(...kids.map(e => e.getBoundingClientRect().bottom));
   const avail = intro.clientHeight - 48;
-  const fit = bottom - top > avail ? Math.max(.4, avail / (bottom - top)) : 1;
-  intro.style.setProperty("--intro-fit", fit.toFixed(3));
+  const left = Math.min(...kids.map(e => e.getBoundingClientRect().left));
+  const right = Math.max(...kids.map(e => e.getBoundingClientRect().right));
+  const availW = intro.clientWidth - 32;
+  const fit = Math.min(1, bottom - top > avail ? avail / (bottom - top) : 1, right - left > availW ? availW / (right - left) : 1, 1);
+  const minFit = intro.classList.contains("in-frame") ? .1 : .4;
+  intro.style.setProperty("--intro-fit", Math.max(minFit, fit).toFixed(3));
 }
 window.addEventListener("resize", () => fitIntro());
 
@@ -2346,7 +2713,8 @@ function setupIntroMusic(m) {
   stopIntroMusic(false);
   if (m && m.src) introMusic.bgm = createBgm(m, "introVolume",
     /* 음악이 진입 화면 전용이면 START 를 누를 때 잠깐 울렸다 꺼지지 않게 */
-    m.afterStart === "continue" && !(SITE_DATA.mainMusic || {}).src ? null : ".intro-start");
+    m.afterStart === "continue" && !(SITE_DATA.mainMusic || {}).src ? null
+      : ((window.introPreviewCfg || {}).anyClick === false ? ".intro-start" : ".intro"));
 }
 function stopIntroMusic(fade = true) {
   if (introMusic.bgm) introMusic.bgm.stop(fade);
@@ -2415,7 +2783,13 @@ function showIntro(c, onStart) {
     if (ui) { ui.classList.add("fade-in"); ui.addEventListener("animationend", () => ui.classList.remove("fade-in"), { once: true }); }
   } else intro.classList.remove("entering");
   if (introKeyHandler) document.removeEventListener("keydown", introKeyHandler);
+  if (intro._stopNudge) intro._stopNudge();
+  let started = false;
   const start = () => {
+    if (started) return;                                  // 버튼·화면·키보드가 겹쳐도 한 번만
+    started = true;
+    intro.onclick = intro.onpointerenter = intro.onpointerleave = null;
+    if (intro._stopNudge) intro._stopNudge();
     playSfx(introSfx(c, "start"));                       // 띠롱!
     document.removeEventListener("keydown", onKey);
     introKeyHandler = null;
@@ -2440,7 +2814,31 @@ function showIntro(c, onStart) {
     if (e.target.closest && e.target.closest(".intro-sound")) return;   // 볼륨 조절 중에는 무시
     if (e.key === "Enter" || e.key === " ") { e.preventDefault(); start(); }
   };
-  intro.querySelector(".intro-start").addEventListener("click", start, { once: true });
+  const btn = intro.querySelector(".intro-start");
+  btn.addEventListener("click", start, { once: true });
+  /* 모니터 화면(진입 화면) 안 어디를 눌러도 시작 + 화면 위에 마우스만 올려도 START 호버 */
+  const anyClick = c.anyClick !== false;
+  intro.classList.toggle("any-click", anyClick);
+  btn.classList.remove("hot");
+  intro.onclick = anyClick ? e => { if (!e.target.closest(".intro-start")) start(); } : null;
+  intro.onpointerenter = anyClick ? e => { if (e.pointerType === "mouse") btn.classList.add("hot"); } : null;
+  intro.onpointerleave = anyClick ? () => btn.classList.remove("hot") : null;
+  /* 가만있으면 재촉하기: 정한 시간 동안 아무 입력이 없으면 START 가 반짝·통통 */
+  if (c.nudge !== false) {
+    const wait = Math.max(1, Math.min(30, Number(c.nudgeDelay ?? 4))) * 1000;
+    let last = performance.now();
+    const awake = () => { last = performance.now(); };
+    const evs = ["pointermove", "pointerdown", "keydown", "wheel", "touchstart"];
+    evs.forEach(t => window.addEventListener(t, awake, { passive: true }));
+    const timer = setInterval(() => {
+      if (intro.hidden || !btn.isConnected) return intro._stopNudge();
+      if (performance.now() - last < wait || btn.classList.contains("nudge")) return;
+      btn.classList.add("nudge");
+      setTimeout(() => btn.classList.remove("nudge"), 1200);
+      last = performance.now();                           // 계속 가만있으면 같은 간격으로 또
+    }, 250);
+    intro._stopNudge = () => { clearInterval(timer); evs.forEach(t => window.removeEventListener(t, awake)); btn.classList.remove("nudge"); intro._stopNudge = null; };
+  }
   introKeyHandler = onKey;
   document.addEventListener("keydown", onKey);
   /* 자동 포커스는 하지 않음 (F5 등 키보드를 쓴 직후 호버 색이 저절로 켜지는 문제). Enter·스페이스는 위 onKey 로 동작 */
