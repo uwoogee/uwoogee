@@ -352,9 +352,10 @@
   .pop-tools .pop-zoom-label { width: 44px; height: 26px; font-size: 11px; letter-spacing: .02em; border-radius: 8px; }
   .pop-tools hr { width: 22px; border: 0; border-top: 1px solid rgba(255, 255, 255, .15); margin: 4px 0; }
   .pop-tools[hidden] { display: none; }
-  @media (max-width: 900px), (hover: none) { .pop-tools { display: none !important; } }
+  /* 휴대폰(좁은 화면이면서 마우스가 없는 기기)에서만 숨김. 노트북 배율·터치스크린 노트북에서도 보이게 */
+  @media (max-width: 640px), (any-hover: none) { .pop-tools { display: none !important; } }
   /* 도구가 있으면 팝업 오른쪽에 도구 자리를 남겨둠 (팝업이 화면을 거의 꽉 채울 때) */
-  @media (min-width: 901px) and (hover: hover) {
+  @media (min-width: 641px) and (any-hover: hover) {
     .modal.has-tools .modal-panel { width: min(var(--modal-width, 1400px), calc(94vw - 120px)); }
   }
 
@@ -397,9 +398,11 @@
   /* ---------- 메인 페이지 도트 배경 (편집기 > 배경) ---------- */
   .page-dots { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
   .page-dots[hidden] { display: none; }
-  .page-dots-in { position: absolute; left: 0; right: 0; top: 0; height: calc(100% + var(--pd-step, 0px)); background-image: var(--pd-img, none); background-position: center; will-change: transform; }
-  .page-dots.flow .page-dots-in { animation: page-dots-flow var(--pd-speed, 6s) linear infinite; }
-  @keyframes page-dots-flow { to { background-position: var(--pd-to); } }
+  .page-dots-in { position: absolute; left: 0; right: 0; top: 0; height: calc(100% + var(--pd-step, 0px)); will-change: transform; }
+  .page-dots-in::before { content: ""; position: absolute; inset: calc(-1 * var(--pd-step, 0px)); background-image: var(--pd-img, none); background-position: center; }
+  .page-dots.flow .page-dots-in::before { animation: dots-move var(--pd-speed, 6s) linear infinite; will-change: transform; }
+  /* 흐르는 무늬: 무늬 한 칸만큼 통째로 밀었다가 처음으로 → 끝없이 흐르는 것처럼 보임 (다시 그리지 않고 옮기기만 해서 가벼움) */
+  @keyframes dots-move { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(var(--mx, 0px), var(--my, 0px), 0); } }
   .modal.glass .modal-panel::before, .modal.glass .modal-panel::after { will-change: transform; }
   .modal.glass .modal-close { z-index: 4; }
   .modal.glass .modal-scroll::-webkit-scrollbar-thumb { border-color: transparent; }
@@ -466,6 +469,12 @@
     display: block; width: 100%; border-radius: 10px; background: #f2f2f6;
   }
   .post img, .post video { height: auto; }
+  /* 조각난 긴 이미지: 틈 없이 이어 붙이고 바깥만 둥글게 */
+  .post figure.sliced { overflow: hidden; border-radius: 10px; }
+  .post figure.sliced img.slice, .modal.dark .post figure.sliced img.slice { border-radius: 0; }
+  .post figure.sliced img.slice + img.slice { margin-top: -1px; }
+  /* 화면 밖에 있는 게시글 이미지는 그리지 않고 건너뜀 (긴 팝업 스크롤이 가벼워짐) */
+  .post figure { content-visibility: auto; contain-intrinsic-size: auto 600px; }
   /* 세로 영상 (편집기 > 팝업 > 세로 영상 최대 높이) */
   .post figure.portrait video { width: auto; max-width: 100%; max-height: var(--pop-portrait-h, 80vh); margin: 0 auto; }
   .post figure.portrait .embed { width: auto; max-width: 100%; height: var(--pop-portrait-h, 80vh); aspect-ratio: 9 / 16; margin: 0 auto; }
@@ -598,8 +607,9 @@
   .intro-back.entering { animation: intro-fade-in 1s ease both; }
   .intro-back.leaving { animation: intro-out .6s ease forwards; }
   /* 방(모니터 바깥) 도트 무늬 */
-  .intro-room .room-dots { position: absolute; inset: 0; background-image: var(--pd-img, none); background-position: center; }
-  .intro-room.flow .room-dots { animation: page-dots-flow var(--pd-speed, 6s) linear infinite; }
+  .intro-room { overflow: hidden; }
+  .intro-room .room-dots { position: absolute; inset: calc(-1 * var(--pd-step, 0px)); background-image: var(--pd-img, none); background-position: center; }
+  .intro-room.flow .room-dots { animation: dots-move var(--pd-speed, 6s) linear infinite; will-change: transform; }
   .intro-room.entering, .intro-frame.entering { animation: intro-fade-in 1s ease both; }
   .intro-room.leaving, .intro-frame.leaving { animation: intro-out .6s ease forwards; }
   /* 브라운관 효과: 유리 반사광 + 가장자리 어둡게 + 주사선 */
@@ -624,21 +634,21 @@
     100% { opacity: 1; transform: none; filter: none; }
   }
   @keyframes crt-flicker { 50% { opacity: .88; } }
-  .intro.crt > * { filter: drop-shadow(0 0 calc(var(--crt-glow, 0) * 14px) rgba(255, 255, 255, calc(var(--crt-glow, 0) * .7))); }
+  .intro.crt.crt-glow > :not(.intro-bg-layer) { filter: drop-shadow(0 0 calc(var(--crt-glow, 0) * 14px) rgba(255, 255, 255, calc(var(--crt-glow, 0) * .7))); }
+  .intro.crt.crt-flicker::after { will-change: opacity; }
   /* 도트 패턴이 천천히 흘러가기 (편집기 > 진입 화면 > 배경) */
   /* 도트 무늬는 별도 층(::before)에 → 다른 요소와 같이 페이드인 가능 */
   .intro::before {
-    content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+    content: ""; position: absolute; inset: calc(-1 * var(--intro-dots-step, 0px)); z-index: -1; pointer-events: none;
     background-image: var(--intro-dots, none); background-position: center;
   }
-  .intro.dots-flow::before { animation: intro-dots-flow var(--intro-dots-speed, 6s) linear infinite; }
+  .intro.dots-flow::before { animation: dots-move var(--intro-dots-speed, 6s) linear infinite; will-change: transform; }
   /* 처음 들어왔을 때: 무늬 → 항목들이 위에서부터 차례로 페이드인 */
   .intro.entering::before { animation: intro-fade-in 1s ease both; }
-  .intro.entering.dots-flow::before { animation: intro-fade-in 1s ease both, intro-dots-flow var(--intro-dots-speed, 6s) linear infinite; }
+  .intro.entering.dots-flow::before { animation: intro-fade-in 1s ease both, dots-move var(--intro-dots-speed, 6s) linear infinite; }
   .intro.entering > * { animation: intro-fade-in .9s ease both; animation-delay: calc(.15s + var(--i, 0) * .15s); }
   .intro-sound.fade-in { animation: intro-fade-in .9s ease .3s both; }
   @keyframes intro-fade-in { from { opacity: 0; } to { opacity: 1; } }
-  @keyframes intro-dots-flow { to { background-position: var(--intro-dots-to); } }
   /* 사라질 때 (Windows 애니메이션 설정과 상관없이 재생되도록 animation 사용) */
   .intro.leaving { animation: intro-out .6s ease forwards; pointer-events: none; }
   @keyframes intro-out { to { opacity: 0; visibility: hidden; } }
@@ -881,7 +891,7 @@
 </div>
 
 <!-- 사이트 내용은 data.js에 들어 있습니다. 편집은 admin.html(편집기)에서 하세요. -->
-<script src="data.js?v=20261015013458"></script>
+<script src="data.js?v=20261016000117"></script>
 <script>
 const SOCIAL_ICONS = {
   instagram: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>',
@@ -981,6 +991,10 @@ function renderBlock(raw, i, j) {
     media = b.loop
       ? `<video src="${esc(b.src)}" autoplay loop muted playsinline disablepictureinpicture${poster}></video>`
       : `<video src="${esc(b.src)}" controls controlslist="nodownload" disablepictureinpicture playsinline preload="metadata"${poster}></video>`;
+  } else if (Array.isArray(b.slices) && b.slices.length && b.slicesOf === b.src) {
+    /* 가볍게 만든 긴 이미지: 화면 폭에 맞춘 조각들을 이어 붙여서 (보이는 조각만 그림) */
+    f.classList.add("sliced");
+    media = b.slices.map((s, k) => `<img class="slice" src="${esc(s)}" alt="${k ? "" : esc(b.caption || "")}" loading="lazy" decoding="async" draggable="false"${b.sliceH && b.sliceW ? ` width="${b.sliceW}" height="${k === b.slices.length - 1 && b.lastH ? b.lastH : b.sliceH}"` : ""}>`).join("");
   } else {
     media = `<img src="${esc(b.src)}" alt="${esc(b.caption || "")}" loading="lazy" decoding="async" draggable="false">`;
   }
@@ -1533,10 +1547,13 @@ function gifBitmaps(src) {
 const gifCanvases = new Set();
 let gifLoop = 0;
 function drawGifCanvases(now) {
+  let drew = false;
   gifCanvases.forEach(cv => {
     const host = cv.parentElement;
     if (!cv.isConnected || !host) return gifCanvases.delete(cv);
-    if (Number(getComputedStyle(host).opacity) === 0 || host.closest("[hidden]")) return;
+    if (host.closest("[hidden]")) return;
+    drew = true;                                            // 진입 화면이 떠 있는 동안은 계속 (전환 중인 장면 포함)
+    if (Number(getComputedStyle(host).opacity) === 0) return;
     const g = cv._gif, d = host.dataset;
     const dpr = Math.min(2, window.devicePixelRatio || 1);
     const cw = Math.max(1, Math.round(host.clientWidth * dpr)), ch = Math.max(1, Math.round(host.clientHeight * dpr));
@@ -1570,7 +1587,7 @@ function drawGifCanvases(now) {
     else { const s = Math.max(cw / g.W, ch / g.H); dw = g.W * s; dh = g.H * s; }   // cover · zoom · pan
     ctx.drawImage(img, (cw - dw) * px, (ch - dh) * py, dw, dh);
   });
-  gifLoop = gifCanvases.size ? requestAnimationFrame(drawGifCanvases) : 0;
+  gifLoop = gifCanvases.size && drew ? requestAnimationFrame(drawGifCanvases) : 0;
 }
 function playBgGifs(root) {
   if (!isPhone() || !window.createImageBitmap) return;
@@ -2191,7 +2208,7 @@ function paintDotsLayer(el, d) {
   el.classList.toggle("flow", !!flow);
   if (flow) {
     const speed = Math.max(2, Math.min(400, Number(d.dotSpeed ?? 30)));
-    el.style.setProperty("--pd-to", `calc(50% + ${flow[0] * T}px) calc(50% + ${flow[1] * T}px)`);
+    el.style.setProperty("--mx", flow[0] * T + "px"); el.style.setProperty("--my", flow[1] * T + "px");
     el.style.setProperty("--pd-speed", (T * Math.hypot(...flow) / speed).toFixed(2) + "s");
   }
   return T;
@@ -2217,14 +2234,15 @@ window.addEventListener("scroll", movePageDots, { passive: true });
 try { applyPageDots((SITE_DATA.theme || {}).pageDots); } catch {}   // 처음 그릴 때는 위 코드가 아직 준비 전이라 여기서 한 번 더
 
 function applyIntroDots(c) {
-  const props = ["--intro-dots", "--intro-dots-to", "--intro-dots-speed"];
+  const props = ["--intro-dots", "--intro-dots-step", "--mx", "--my", "--intro-dots-speed"];
   if (c.dots !== true) { props.forEach(k => intro.style.removeProperty(k)); intro.classList.remove("dots-flow"); return; }
   const { url, T } = introDotsTile(c);
   intro.style.setProperty("--intro-dots", url);
+  intro.style.setProperty("--intro-dots-step", T + "px");
   const flow = DOT_FLOW[c.dotFlow === true ? "diag" : c.dotFlow];
   if (flow) {
     const speed = Math.max(2, Math.min(400, Number(c.dotSpeed ?? 30)));       // 초당 px
-    intro.style.setProperty("--intro-dots-to", `calc(50% + ${flow[0] * T}px) calc(50% + ${flow[1] * T}px)`);
+    intro.style.setProperty("--mx", flow[0] * T + "px"); intro.style.setProperty("--my", flow[1] * T + "px");
     intro.style.setProperty("--intro-dots-speed", (T * Math.hypot(...flow) / speed).toFixed(2) + "s");
   }
   intro.classList.toggle("dots-flow", !!flow);
@@ -2499,6 +2517,7 @@ function applyIntroFrame(c) {
   is.setProperty("--crt-glare", clampN(f.glare, .15, 0, 1));
   is.setProperty("--crt-glow", clampN(f.glow, 0, 0, 1));
   intro.classList.toggle("crt-flicker", f.flicker === true);
+  intro.classList.toggle("crt-glow", clampN(f.glow, 0, 0, 1) > 0);
   introFrame.classList.toggle("front", f.front === true);
   if (f.backImage) { if (introBack.getAttribute("src") !== f.backImage) introBack.src = f.backImage; }
   else introBack.removeAttribute("src");
