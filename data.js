@@ -794,18 +794,13 @@ window.SITE = {
       "closeBg": "#454545",
       "closeSize": 36,
       "glass": {
-        "blur": 71,
-        "tintAlpha": 0.42,
-        "light": 0.6,
-        "depth": 0.3,
-        "frost": 0.11,
-        "refract": 40,
-        "refractWidth": 40,
-        "dispersion": 0.3,
-        "saturate": 1.3,
         "enabled": true,
+        "blur": 28,
         "tint": "#000000",
-        "dim": 0.35
+        "tintAlpha": 0.45,
+        "light": 0.35,
+        "depth": 0.5,
+        "frost": 0.04
       },
       "bottom": 100,
       "metaGap": 55
