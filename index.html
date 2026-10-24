@@ -9,6 +9,7 @@
   try {
     if (window.self === window.top && !/^#post-/.test(location.hash))
       document.documentElement.classList.add("intro-pending");
+    if (window.self === window.top) document.documentElement.classList.add("lock-pending");
   } catch (e) {}
 </script>
 <!-- 링크 미리보기 (카카오톡·X·디스코드 등) -->
@@ -335,8 +336,7 @@
   .pop-tools {
     position: fixed; z-index: 3; display: flex; flex-direction: column; align-items: center; gap: 2px;
     padding: 6px; border-radius: 16px;
-    background: rgba(18, 18, 20, .72); border: 1px solid rgba(255, 255, 255, .1);
-    -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+    background: rgba(18, 18, 20, .9); border: 1px solid rgba(255, 255, 255, .1);   /* 흐림(backdrop) 없이: 팝업을 스크롤할 때마다 다시 계산하지 않게 */
     box-shadow: 0 10px 30px rgba(0, 0, 0, .35);
     color: #fff; font: 600 11px/1 var(--font, sans-serif);
     opacity: 0; transition: opacity .2s;
@@ -549,6 +549,42 @@
      로고 → START → 픽셀 움짤 → 이미지 순서. 크기·색·간격은 편집기 > 진입 화면 에서 */
   /* 진입 화면 동안 숨길 것은 페이지 내용(헤더·본문·스티커)만. 커서·클릭 효과·음악 버튼 등은 그대로 보임 */
   html.intro-pending :is(body > .hero, body > .wrap, body > .stickers) { visibility: hidden; }
+  /* ---------- 비밀번호 화면 ---------- */
+  html.lock-pending body > :not(.lock-screen) { visibility: hidden !important; }
+  html.lock-pending, html.lock-pending body { overflow: hidden; }
+  .lock-screen {
+    position: fixed; inset: 0; z-index: 2147482000; display: grid; place-items: center; padding: 20px;
+    background: rgba(0, 0, 0, .72); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+    animation: intro-fade-in .25s ease both;
+  }
+  .lock-screen.full { background: var(--lock-bg, var(--bg, #000)); -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .lock-screen.leaving { animation: intro-out .25s ease forwards; }
+  .lock-box {
+    width: min(340px, 100%); display: flex; flex-direction: column; align-items: center; gap: 12px;
+    padding: 28px 24px 22px; border-radius: 18px; text-align: center; color: #fff;
+    background: rgba(24, 24, 28, .92); border: 1px solid rgba(255, 255, 255, .1); box-shadow: 0 20px 60px rgba(0, 0, 0, .5);
+  }
+  .lock-icon svg { width: 34px; height: 34px; color: var(--lock-accent, #fff); }
+  .lock-title { font-family: "Press Start 2P", ui-monospace, monospace; font-size: 14px; letter-spacing: .08em; }
+  .lock-hint { font-size: 13px; color: rgba(255, 255, 255, .6); line-height: 1.6; white-space: pre-line; }
+  .lock-input {
+    width: 100%; padding: 12px 14px; border-radius: 10px; font: 500 15px var(--font); text-align: center; letter-spacing: .1em;
+    color: #fff; background: rgba(255, 255, 255, .07); border: 1px solid rgba(255, 255, 255, .15); outline: none;
+  }
+  .lock-input:focus { border-color: var(--lock-accent, rgba(255, 255, 255, .5)); }
+  .lock-error { min-height: 16px; font-size: 12px; color: #ff6b81; }
+  .lock-btns { display: flex; gap: 8px; width: 100%; }
+  .lock-btns button {
+    flex: 1; padding: 11px 0; border-radius: 10px; border: 0; cursor: pointer;
+    font-family: "Press Start 2P", ui-monospace, monospace; font-size: 11px; letter-spacing: .06em;
+  }
+  .lock-ok { background: var(--lock-accent, #fff); color: #111; }
+  .lock-cancel { background: rgba(255, 255, 255, .1); color: #fff; }
+  .lock-box.shake { animation: lock-shake .4s ease; }
+  @keyframes lock-shake { 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
+  /* 잠긴 카드 표시 */
+  .card-lock { display: inline-block; width: .8em; height: .8em; margin-left: .35em; vertical-align: baseline; opacity: .75; }
+  .card-lock svg { width: 100%; height: 100%; }
   html.intro-pending, html.intro-pending body { overflow: hidden; }
   .intro {
     position: fixed; inset: 0; z-index: 100;
@@ -891,7 +927,7 @@
 </div>
 
 <!-- 사이트 내용은 data.js에 들어 있습니다. 편집은 admin.html(편집기)에서 하세요. -->
-<script src="data.js?v=20261016000117"></script>
+<script src="data.js?v=20261025013247"></script>
 <script>
 const SOCIAL_ICONS = {
   instagram: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>',
@@ -1870,7 +1906,7 @@ function render(site) {
     const inner = `
       <span class="card-content">
         <span class="card-text">
-          <span class="card-title" style="display:block">${esc(l.title)}</span>
+          <span class="card-title" style="display:block">${esc(l.title)}${l.locked && (SITE_DATA.postLock || {}).hash && (SITE_DATA.postLock || {}).badge !== false ? `<span class="card-lock" title="비밀번호 필요">${LOCK_ICON}</span>` : ""}</span>
           <span class="card-sub" style="display:block">${esc(l.sub)}</span>
         </span>
       </span>`;
@@ -1897,9 +1933,76 @@ const modal = document.getElementById("modal");
 const post = document.getElementById("post");
 let lastFocus = null;
 
+/* ---------- 비밀번호 (편집기 > 비밀번호) ----------
+   사이트 전체 잠금(site.lock) + 작업물 잠금(site.postLock, 카드마다 locked)
+   비밀번호는 그대로 저장하지 않고 해시값만 저장해서 비교 (간단한 가림막: 일반 방문자용) */
+async function sha256hex(text) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, "0")).join("");
+}
+const lockHash = (salt, pw) => sha256hex(`${salt || ""}:${pw}`);
+function lockStored(key, hash) {
+  try { return !!hash && (sessionStorage.getItem(key) === hash || localStorage.getItem(key) === hash); } catch { return false; }
+}
+function lockRemember(key, hash, always) {
+  try { (always ? localStorage : sessionStorage).setItem(key, hash); } catch {}
+}
+const LOCK_ICON = `<svg viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true"><path fill="currentColor" d="M5 2h6v1h1v4h1v7H3V7h1V3h1zm1 2v3h4V4zm1 5v3h2V9z"/></svg>`;
+/* 비밀번호 입력 화면. full: 사이트 전체(닫기 없음) / 아니면 작은 창(취소 가능). 맞으면 true */
+function askPassword({ full, title, hint, button, check }) {
+  return new Promise(resolve => {
+    const el = document.createElement("div");
+    el.className = "lock-screen" + (full ? " full" : "");
+    el.innerHTML = `<form class="lock-box" autocomplete="off">
+        <div class="lock-icon">${LOCK_ICON}</div>
+        <div class="lock-title">${esc(title || "PASSWORD")}</div>
+        ${hint ? `<div class="lock-hint">${esc(hint)}</div>` : ""}
+        <input class="lock-input" type="password" inputmode="text" autocomplete="off" aria-label="비밀번호" placeholder="비밀번호">
+        <div class="lock-error" aria-live="polite"></div>
+        <div class="lock-btns">
+          ${full ? "" : `<button type="button" class="lock-cancel">취소</button>`}
+          <button type="submit" class="lock-ok">${esc(button || "ENTER")}</button>
+        </div>
+      </form>`;
+    document.body.appendChild(el);
+    const input = el.querySelector("input"), err = el.querySelector(".lock-error"), box = el.querySelector(".lock-box");
+    setTimeout(() => input.focus(), 50);
+    const close = ok => { el.classList.add("leaving"); setTimeout(() => el.remove(), 250); resolve(ok); };
+    el.querySelector("form").addEventListener("submit", async e => {
+      e.preventDefault();
+      if (!input.value) return input.focus();
+      if (await check(input.value)) return close(true);
+      err.textContent = "비밀번호가 틀렸어요";
+      box.classList.remove("shake"); void box.offsetWidth; box.classList.add("shake");
+      input.select();
+    });
+    const cancel = el.querySelector(".lock-cancel");
+    if (cancel) {
+      cancel.addEventListener("click", () => close(false));
+      el.addEventListener("click", e => { if (e.target === el) close(false); });
+      el.addEventListener("keydown", e => { if (e.key === "Escape") close(false); });
+    }
+  });
+}
+/* 작업물 잠금: 비밀번호가 설정돼 있고, 아직 이번에 풀지 않았으면 물어봄 */
+async function unlockPost(l) {
+  const P = SITE_DATA.postLock || {};
+  if (!l.locked || !P.hash || window.self !== window.top || lockStored("postUnlock", P.hash)) return true;
+  const ok = await askPassword({ title: P.title || "LOCKED", hint: P.hint || "비밀번호가 필요한 작업물이에요", button: "OPEN",
+    check: async pw => (await lockHash(P.salt, pw)) === P.hash });
+  if (ok) lockRemember("postUnlock", P.hash, P.remember === "always");
+  return ok;
+}
+
 function openModal(i, trigger) {
   const l = SITE_DATA.links[i];
   if (!l || l.type === "category") return;
+  /* 잠긴 작업물이면 비밀번호부터 */
+  const P = SITE_DATA.postLock || {};
+  if (l.locked && P.hash && window.self === window.top && !lockStored("postUnlock", P.hash)) {
+    unlockPost(l).then(ok => { if (ok) openModal(i, trigger); });
+    return;
+  }
   lastFocus = trigger || null;
   document.getElementById("modal-title").textContent = l.title || "";
   document.getElementById("modal-desc").textContent = l.desc || l.sub || "";
@@ -3032,6 +3135,23 @@ function revealOnLoad() {
 
 /* 진입 화면을 보여줄지 정하고, START 를 누르면 메인 페이지 등장 */
 (function startPage() {
+  const L = SITE_DATA.lock || {};
+  const unlockDone = () => {
+    document.documentElement.classList.remove("lock-pending");
+    if (window._afterUnlock) { const f = window._afterUnlock; window._afterUnlock = null; setTimeout(f, 50); }
+  };
+  if (window.self !== window.top || !L.enabled || !L.hash || lockStored("siteUnlock", L.hash)) { unlockDone(); return begin(); }
+  /* 사이트 전체 비밀번호 */
+  if (/^#[0-9a-f]{3,8}$/i.test(L.accent || "")) document.documentElement.style.setProperty("--lock-accent", L.accent);
+  if (/^#[0-9a-f]{3,8}$/i.test(L.bg || "")) document.documentElement.style.setProperty("--lock-bg", L.bg);
+  askPassword({ full: true, title: L.title || "PASSWORD", hint: L.hint, button: L.button || "ENTER",
+    check: async pw => (await lockHash(L.salt, pw)) === L.hash }).then(() => {
+    lockRemember("siteUnlock", L.hash, L.remember === "always");
+    unlockDone();
+    begin();
+  });
+})();
+function begin() {
   const c = SITE_DATA.intro || {};
   let seen = false;
   try { seen = sessionStorage.getItem("introSeen") === "1"; } catch {}
@@ -3050,7 +3170,7 @@ function revealOnLoad() {
     try { sessionStorage.setItem("introSeen", "1"); } catch {}
     enter();
   });
-})();
+}
 
 /* ---------- 방문 통계 (GoatCounter) ----------
    편집기 > 통계 에서 정한 코드로 기록. 내 컴퓨터(localhost)와 편집기 미리보기에서는 자동으로 기록하지 않음.
@@ -3067,7 +3187,10 @@ function revealOnLoad() {
 
 /* 주소 끝에 #post-2 처럼 붙이면 해당 게시물이 바로 열립니다 */
 const m = location.hash.match(/^#post-(\d+)$/);
-if (m) openModal(+m[1]);
+if (m) {
+  if (document.documentElement.classList.contains("lock-pending")) window._afterUnlock = () => openModal(+m[1]);
+  else openModal(+m[1]);
+}
 
 /* ---------- 이미지·영상 저장 막기 ----------
    오른쪽 클릭(PC) / 길게 누르기(휴대폰)의 '이미지 저장' 메뉴와 끌어서 저장을 막음.
