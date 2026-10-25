@@ -788,13 +788,10 @@ window.SITE = {
       "contentGap": 106,
       "textLine": 1.3,
       "descLine": 1.85,
-      "bg": "#242628",
       "width": 1600,
       "closeX": 35,
-      "closeBg": "#454545",
-      "closeSize": 36,
+      "closeBg": "#424242",
       "glass": {
-        "enabled": true,
         "blur": 28,
         "tint": "#000000",
         "tintAlpha": 0.45,
@@ -803,7 +800,8 @@ window.SITE = {
         "frost": 0.04
       },
       "bottom": 100,
-      "metaGap": 55
+      "metaGap": 55,
+      "bg": "#1c1c1c"
     },
     "cursor": {
       "pointer": "uploads/20261010-090826-hand.png",
