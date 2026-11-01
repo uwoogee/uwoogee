@@ -9,7 +9,7 @@ window.SITE = {
       "instagram": "https://www.instagram.com/u.onew",
       "x": "",
       "tiktok": "",
-      "notion": "https://amusing-temper-4d5.notion.site/ONE-Archive-3d99c17422b38101b10af0aab3822991?pvs=74",
+      "notion": "https://uwoogee.notion.site/ONE-Archive-3d99c17422b38101b10af0aab3822991?source=copy_link",
       "email": "uwoogee@naver.com"
     },
     "header": "uploads/20261010-054807-3.mp4"
@@ -713,7 +713,7 @@ window.SITE = {
     {
       "title": "Notion",
       "sub": "INSIGHTS / STUDY / REFERENCES",
-      "url": "https://amusing-temper-4d5.notion.site/ONE-Archive-3d99c17422b38101b10af0aab3822991?pvs=74",
+      "url": "https://uwoogee.notion.site/ONE-Archive-3d99c17422b38101b10af0aab3822991?source=copy_link",
       "thumb": "uploads/20261010-072116-Untitled-8.jpg",
       "desc": "",
       "post": [],
@@ -977,5 +977,12 @@ window.SITE = {
     "name": "뉴진.mp3",
     "volume": 0.3,
     "position": "top-right"
-  }
+  },
+  "lock": {
+    "enabled": true,
+    "title": "",
+    "salt": "1cfb528d6b9c8a75f3fa2969",
+    "hash": "2f5b9645a8f31890864cc201cb7879b34d7f032a9f455cdc742b4b1940694bf1"
+  },
+  "postLock": {}
 };
